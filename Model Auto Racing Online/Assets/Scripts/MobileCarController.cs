@@ -5,29 +5,27 @@ using UnityEngine;
 public class MobileCarController : MonoBehaviour
 {
     public float myCarV = 0;
-    public static MobileCarController instance;
+    public float myCarH = 0;
+    [SerializeField]
+    private MobilePowerChange accel;
+    [SerializeField]
+    private MobileSteeringWheel steer;
+
     // Start is called before the first frame update
     void Start()
     {
-        instance = this;
     }
     
     // Update is called once per frame
     void Update()
     {
-        
     }
-    public void SetCarV(float center, float vval) 
+    public void SetCarV(float vval) 
     {
-        if (vval > center) 
-        {
-            myCarV = 1/(vval-center);
-        }
-
-        else if (vval < center)
-        {
-            myCarV = -1;
-        }
-
+        myCarV = vval;
+    }
+    public void SetCarH(float vval)
+    {
+        myCarH = vval;
     }
 }
