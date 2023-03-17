@@ -33,7 +33,7 @@ public class MobilePowerChange : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (slider.value != default_slide)
+        if (hasChange())
         {
             changeSpeed();
         }
@@ -59,6 +59,9 @@ public class MobilePowerChange : MonoBehaviour
 
         mcc.SetCarV(dec_change);
     }
+
+    public bool hasChange() 
+    {
+        return (slider.value != default_slide);
+    }
 }
-
-

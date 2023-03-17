@@ -138,4 +138,8 @@ public class MobileSteeringWheel : MonoBehaviour
 
         wheelBeingHeld = false;
     }
+    public bool isWheelHeld() 
+    {
+        return wheelBeingHeld;
+    }
 }

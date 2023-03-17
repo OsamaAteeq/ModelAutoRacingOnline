@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace UnityStandardAssets.Vehicles.Car
 {
+    
     internal enum CarDriveType
     {
         FrontWheelDrive,
@@ -18,6 +19,24 @@ namespace UnityStandardAssets.Vehicles.Car
 
     public class CarController : MonoBehaviour
     {
+        //My Edits start
+        public RaceManager tim;
+
+        private bool respawned = false;
+        private bool waitframe = true;
+
+        private Vector3 startpos;
+        private Quaternion startrot;
+
+        public Color color;
+
+        public bool crossmiddle = false;
+        public int lap = 1;
+
+        public bool hittingFloor = false;
+
+
+        //My Edits end
         [SerializeField] private CarDriveType m_CarDriveType = CarDriveType.FourWheelDrive;
         [SerializeField] private WheelCollider[] m_WheelColliders = new WheelCollider[4];
         [SerializeField] private GameObject[] m_WheelMeshes = new GameObject[4];
@@ -58,6 +77,12 @@ namespace UnityStandardAssets.Vehicles.Car
         // Use this for initialization
         private void Start()
         {
+            //myEdit start
+            tim = transform.root.GetComponentInChildren<RaceManager>();
+            startpos = transform.position;
+            startrot = transform.rotation;
+            //my Edit end
+
             m_WheelMeshLocalRotations = new Quaternion[4];
             for (int i = 0; i < 4; i++)
             {
@@ -71,6 +96,67 @@ namespace UnityStandardAssets.Vehicles.Car
             m_CurrentTorque = m_FullTorqueOverAllWheels - (m_TractionControl*m_FullTorqueOverAllWheels);
         }
 
+        //my functions
+        public void resetIt()
+        {
+            transform.rotation = startrot;
+            transform.position = startpos;
+            respawned = true;
+            crossmiddle = false;
+            lap = 1;
+
+            for (int i = 0; i < 4; i++)
+            {
+                m_WheelColliders[i].motorTorque = 0;
+                m_WheelColliders[i].steerAngle = 0;
+                m_WheelColliders[i].steerAngle = 0;
+                m_WheelColliders[i].brakeTorque = Mathf.Infinity;
+            }
+            m_Rigidbody.isKinematic = true;
+            respawned = true;
+            waitframe = false;
+        }
+
+        public void hitMark(Transform mark)
+        {
+            if (mark.name == "middle")
+            {
+                crossmiddle = true;
+            }
+            if (crossmiddle && mark.name == "begin")
+            {
+                crossmiddle = false;
+                lap++;
+                if (lap == tim.laps + 1)
+                {
+                    SendMessage("finished");
+                }
+                tim.addlap(transform, lap, color);
+            }
+        }
+
+        void LateUpdate()
+        {
+            // (if the vehicle has been respanwed this frame, 
+            //        then a variable respawned is set to true)
+
+            if (waitframe && respawned)
+            {
+                waitframe = false;
+                for (int i = 0; i < 4; i++)
+                {
+                    m_WheelColliders[i].brakeTorque = 0;
+                }
+                m_Rigidbody.isKinematic = false;
+                respawned = false;
+            }
+            else if (!waitframe && respawned)
+            {
+                waitframe = true;
+            }
+        }
+
+        //end my functions
 
         private void GearChanging()
         {
@@ -363,5 +449,6 @@ namespace UnityStandardAssets.Vehicles.Car
             }
             return false;
         }
+        
     }
 }

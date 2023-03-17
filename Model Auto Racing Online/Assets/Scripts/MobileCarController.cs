@@ -6,10 +6,6 @@ public class MobileCarController : MonoBehaviour
 {
     public float myCarV = 0;
     public float myCarH = 0;
-    [SerializeField]
-    private MobilePowerChange accel;
-    [SerializeField]
-    private MobileSteeringWheel steer;
 
     // Start is called before the first frame update
     void Start()
