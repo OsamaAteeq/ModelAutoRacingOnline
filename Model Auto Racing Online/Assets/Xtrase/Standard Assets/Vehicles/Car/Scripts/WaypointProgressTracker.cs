@@ -109,7 +109,6 @@ namespace UnityStandardAssets.Utility
                 {
                     progressDistance += progressDelta.magnitude * 0.5f;
                 }
-
                 lastPosition = transform.position;
             }
             else
@@ -147,6 +146,22 @@ namespace UnityStandardAssets.Utility
                 Gizmos.DrawWireSphere(circuit.GetRoutePosition(progressDistance), 1);
                 Gizmos.color = Color.yellow;
                 Gizmos.DrawLine(target.position, target.position + target.forward);
+            }
+        }
+
+        public float GetProgress() 
+        {
+            if (progressStyle == ProgressStyle.SmoothAlongRoute)
+            {
+                return progressDistance;
+            }
+            else if (progressStyle == ProgressStyle.PointToPoint)
+            {
+                return progressNum;
+            }
+            else 
+            {
+                return 0;
             }
         }
     }
