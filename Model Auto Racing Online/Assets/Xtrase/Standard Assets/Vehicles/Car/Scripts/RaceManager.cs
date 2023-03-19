@@ -103,6 +103,7 @@ public class RaceManager : MonoBehaviour
                 aicar.enabled = false;
                 Debug.Log("AI Found");
             }
+            car.GetComponent<CarSelfRighting>().SetActive(false);
         }
         if (raceType == RaceType.Elimination)
         {
@@ -115,7 +116,6 @@ public class RaceManager : MonoBehaviour
             {
                 laps = ((totalVehicles - 1) / _elemenateEachLap) + 1;
             }
-            _winInTop = totalVehicles - _elemenateEachLap;
             Debug.Log("LAPS: " + laps + ": WININTOP : " + _winInTop);
         }
 
@@ -165,9 +165,11 @@ public class RaceManager : MonoBehaviour
                     foreach (CarAIControl car in Aicars)
                     {
                         car.enabled = true;
+                        car.GetComponent<CarSelfRighting>().SetActive(true);
                     }
                 }
                 player.enabled = true;
+                player.GetComponent<CarSelfRighting>().SetActive(true);
 
             }
             else if (count < 4.5f)
@@ -254,7 +256,7 @@ public class RaceManager : MonoBehaviour
 
                 currentlap = lap;
                 lapsLabel.text = timerLabel.text + "\n" + lapsLabel.text;
-                if (lap == laps)
+                if (lap == laps && raceType!=RaceType.Elimination)
                 {
                     //final lap
                     pausemusicbriefly(2.5f);
@@ -267,26 +269,43 @@ public class RaceManager : MonoBehaviour
         }
         if (raceType == RaceType.Elimination)
         {
-            
+            Debug.LogWarning("Breakpoint 1 : "+who.name);
             if (!passedCars.Contains(who.gameObject.GetComponent<CarController>()))
             {
                 passedCars.Add(who.gameObject.GetComponent<CarController>());
+                Debug.LogWarning("Breakpoint 2 " + (totalVehicles - _elemenateEachLap) + ": " + passedCars.Count);
                 int y = totalVehicles;
                 if (passedCars.Count == (y - _elemenateEachLap))
                 {
                     foreach (CarController car in cars)
                     {
-                        if (!passedCars.Contains(car))
+                        if (!passedCars.Contains(car) && car.gameObject.activeInHierarchy)
                         {
                             car.gameObject.SetActive(false);
+                            if (car.CompareTag("Player")) 
+                            {
+                                finished = true;
+                                beeps[3].Stop();
+                                beeps[4].PlayOneShot(loserace);
+                            }
+                            Debug.Log("Deactivated : "+car.gameObject.name);
                             totalVehicles--;
                         }
                     }
-                    _winInTop = totalVehicles - _elemenateEachLap;
+                    if (player.gameObject.activeInHierarchy)
+                    {
+                        pausemusicbriefly(2.5f);
+                        beeps[4].PlayOneShot(finallap);
+                        finallaptext.text = _elemenateEachLap + " Eliminated";
+                        finallaptext.enabled = true;
+                        Invoke("removemes", 2);
+                    }
+                    passedCars.Clear();
                 }
             }
             else 
             {
+                Debug.LogWarning("Breakpoint 3 : LAP TWICE");
                 List<WaypointProgressTracker> notPassed = new List<WaypointProgressTracker>();
                 GameObject toRemove = new GameObject();
                 int num_to_remove = _elemenateEachLap;
@@ -294,12 +313,12 @@ public class RaceManager : MonoBehaviour
                 float min;
                 foreach (CarController car in cars)
                 {
-                    if (!passedCars.Contains(car))
+                    if (!passedCars.Contains(car) && car.gameObject.activeInHierarchy)
                     {
                         notPassed.Add(car.GetComponent<WaypointProgressTracker>());
                     }
                 }
-                while (num_to_remove > 0 || notPassed.Count > 0)
+                while (num_to_remove > 0 && notPassed.Count > 0)
                 {
                     min = float.MaxValue;
                     foreach (WaypointProgressTracker loser in notPassed)
@@ -311,25 +330,27 @@ public class RaceManager : MonoBehaviour
                         }
                     }
                     notPassed.Remove(toRemove.GetComponent<WaypointProgressTracker>());
+                    toRemove.SetActive(false);
+                    if (toRemove.CompareTag("Player"))
+                    {
+                        finished = true;
+                        beeps[3].Stop();
+                        beeps[4].PlayOneShot(loserace);
+                    }
+                    Debug.Log("Deactivated Lapped 2 times : " + toRemove.name);
                     num_to_remove--;
                     totalVehicles--;
                 }
-                _winInTop = totalVehicles - _elemenateEachLap;
-            }
-            if (who.CompareTag("Player"))
-            {
-                //if elimination is eminent
-                if ((lap != laps) && (totalVehicles < (passedCars.Count + _elemenateEachLap)))
+                if (player.gameObject.activeInHierarchy)
                 {
                     pausemusicbriefly(2.5f);
                     beeps[4].PlayOneShot(finallap);
-                    finallaptext.text = "Elimination Eminent";
+                    finallaptext.text = _elemenateEachLap+" Eliminated";
                     finallaptext.enabled = true;
                     Invoke("removemes", 2);
                 }
+                passedCars.Clear();
             }
-            passedCars.Clear();
-
         }
 
     }
@@ -370,5 +391,6 @@ public class RaceManager : MonoBehaviour
         myText.alignment = TextAnchor.UpperRight;
         myText.color = color;
         myText.text = (wincount) + ".   " + string.Format("{0:00} : {1:00} : {2:00}", minutes, seconds, fraction); ;
+        who.gameObject.SetActive(false);
     }
 }

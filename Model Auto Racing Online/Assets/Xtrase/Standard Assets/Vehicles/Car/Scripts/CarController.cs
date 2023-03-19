@@ -34,6 +34,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public int lap = 1;
 
         public bool hittingFloor = false;
+        private bool tryingToDrive = false;
 
 
         //My Edits end
@@ -81,6 +82,7 @@ namespace UnityStandardAssets.Vehicles.Car
             tim = transform.root.GetComponentInChildren<RaceManager>();
             startpos = transform.position;
             startrot = transform.rotation;
+            
             //my Edit end
 
             m_WheelMeshLocalRotations = new Quaternion[4];
@@ -99,22 +101,12 @@ namespace UnityStandardAssets.Vehicles.Car
         //my functions
         public void resetIt()
         {
-            transform.rotation = startrot;
-            transform.position = startpos;
-            respawned = true;
-            crossmiddle = false;
-            lap = 1;
-
             for (int i = 0; i < 4; i++)
             {
                 m_WheelColliders[i].motorTorque = 0;
                 m_WheelColliders[i].steerAngle = 0;
                 m_WheelColliders[i].steerAngle = 0;
-                m_WheelColliders[i].brakeTorque = Mathf.Infinity;
             }
-            m_Rigidbody.isKinematic = true;
-            respawned = true;
-            waitframe = false;
         }
 
         public void hitMark(Transform mark)
@@ -154,6 +146,11 @@ namespace UnityStandardAssets.Vehicles.Car
             {
                 waitframe = true;
             }
+        }
+
+        public bool IsTryingToDrive() 
+        {
+            return tryingToDrive;
         }
 
         //end my functions
@@ -281,7 +278,6 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void ApplyDrive(float accel, float footbrake)
         {
-
             float thrustTorque;
             switch (m_CarDriveType)
             {
@@ -317,6 +313,16 @@ namespace UnityStandardAssets.Vehicles.Car
                     m_WheelColliders[i].motorTorque = -m_ReverseTorque*footbrake;
                 }
             }
+            //my edits
+            if (Math.Abs(footbrake)+ Math.Abs(accel) != 0)
+            {
+                tryingToDrive = true;
+            }
+            else
+            {
+                tryingToDrive = false;
+            }
+            //end my edits
         }
 
 
