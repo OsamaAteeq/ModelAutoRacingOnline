@@ -7,6 +7,7 @@ using TMPro;
 
 public class MainMenu : Menu
 {
+
     [Header("Inherit References :")]
     [SerializeField] private Button _profileButton;
     [SerializeField] private Button _storeButton;
@@ -17,22 +18,28 @@ public class MainMenu : Menu
 
     private string username;
     private string money;
-
-    private void Start()
+    /*
+    private void Update()
     {
-        Debug.Log("Started");
+        
+        //Testing Purpose
+        PlayerPrefs.SetInt("money", 500);
+        PlayerPrefs.SetString("bought1", "no");
+        //Testing Purpose
+        
+    }*/
+
+    override
+    public void SetEnable(int value) 
+    {
+        base.SetEnable(value);
         username = PlayerPrefs.GetString("username", "User Name");
         _profileButton.GetComponentInChildren<TextMeshProUGUI>().text = username;
-        money = ""+PlayerPrefs.GetInt("money", 0);
+        money = "" + PlayerPrefs.GetInt("money", 0);
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-/*
-        OnButtonPressed(_playButton, HandlePlayButtonPressed);
-        OnButtonPressed(_optionsButton, HandleOptionsButtonPressed);
-        OnButtonPressed(_quitButton, HandleQuitButtonPressed);
-        OnButtonPressed(_profileButton, HandleProfileButtonPressed);
-        OnButtonPressed(_storeButton, HandleStoreButtonPressed);
-*/
     }
+
+    
 
     public void HandleProfileButtonPressed()
     {

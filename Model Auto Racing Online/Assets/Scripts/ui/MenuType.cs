@@ -7,5 +7,6 @@
     Garage,
     Multiplayer,
     Options,
+    OfflineTournament,
     SingleplayerMaps
 }

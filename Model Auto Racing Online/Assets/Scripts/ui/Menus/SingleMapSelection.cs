@@ -79,20 +79,50 @@ public class SingleMapSelection : Menu
     private string map;
     private Map selected_map;
     private int temp = 1;
+    private string editable;
 
-    private void Start()
+    public void Start()
     {
+        
+    }
+
+    override
+    public void SetEnable(int value)
+    {
+        base.SetEnable(value);
+        editable = PlayerPrefs.GetString("editable", "yes");
+        if (editable == "no")
+        {
+            _nextDifficultyButton.interactable = false;
+            _nextLapButton.interactable = false;
+            _nextMapButton.interactable = false;
+            _nextOppButton.interactable = false;
+            _nextOrderButton.interactable = false;
+            _nextTypeButton.interactable = false;
+            _previousDifficultyButton.interactable = false;
+            _previousLapButton.interactable = false;
+            _previousMapButton.interactable = false;
+            _previousOppButton.interactable = false;
+            _previousOrderButton.interactable = false;
+            _previousTypeButton.interactable = false;
+            _backButton.interactable = false;
+            _freeRoamButton.interactable = false;
+            _storeButton.interactable = false;
+        }
+
+
         money = "" + PlayerPrefs.GetInt("money", 0);
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
 
         lap = PlayerPrefs.GetInt("lap", 2);
-        _lapText.text = ""+lap;
+        _lapText.text = "" + lap;
 
         opp = PlayerPrefs.GetInt("opponent", 2);
-        _opponentText.text = ""+opp;
+        _opponentText.text = "" + opp;
 
         type = PlayerPrefs.GetString("type", "Race");
         _typeText.text = type;
+        _raceText.text = type;
 
 
         difficulty = PlayerPrefs.GetString("difficulty", "Hard");
@@ -104,54 +134,29 @@ public class SingleMapSelection : Menu
         map = PlayerPrefs.GetString("map", "Backyard");
         _mapText.text = map;
 
-        foreach (Map m in maps) 
+        foreach (Map m in maps)
         {
-            if (m.mapname == map) 
+            if (m.mapname == map)
             {
                 _mapImage.sprite = m.picture;
                 selected_map = m;
             }
         }
         Debug.Log(map);
-        if (selected_map.maxLaps < lap) 
+        if (selected_map.maxLaps < lap)
         {
             lap = selected_map.maxLaps;
             _lapText.text = "" + lap;
+            PlayerPrefs.SetInt("lap", lap);
         }
         if (selected_map.maxOpponents < opp)
         {
             opp = selected_map.maxLaps;
             _opponentText.text = "" + opp;
+            PlayerPrefs.SetInt("opponent", opp);
         }
-        /*
-        //map
-        OnButtonPressed(_nextMapButton, HandleNextMapButtonPressed);
-        OnButtonPressed(_previousMapButton, HandlePreviousMapButtonPressed);
-        //lap
-        OnButtonPressed(_nextLapButton, HandleNextLapButtonPressed);
-        OnButtonPressed(_previousLapButton, HandlePreviousLapButtonPressed);
-        //opponent
-        OnButtonPressed(_nextOppButton, HandleNextOppButtonPressed);
-        OnButtonPressed(_previousOppButton, HandlePreviousOppButtonPressed);
-        //type
-        OnButtonPressed(_nextTypeButton, HandleNextTypeButtonPressed);
-        OnButtonPressed(_previousTypeButton, HandlePreviousTypeButtonPressed);
-        //difficulty
-        OnButtonPressed(_nextDifficultyButton, HandleNextDifficultyButtonPressed);
-        OnButtonPressed(_previousDifficultyButton, HandlePreviousDifficultyButtonPressed);
-        //order
-        OnButtonPressed(_nextOrderButton, HandleNextOrderButtonPressed);
-        OnButtonPressed(_previousOrderButton, HandlePreviousOrderButtonPressed);
-
-        //
-        OnButtonPressed(_raceButton, HandleRaceButtonPressed);
-        OnButtonPressed(_freeRoamButton, HandleFreeRoamButtonPressed);
-
-
-        OnButtonPressed(_backButton, HandleBackButtonPressed);
-        OnButtonPressed(_storeButton, HandleStoreButtonPressed);
-        */
     }
+    
 
     public void HandlePreviousMapButtonPressed()
     {
@@ -260,6 +265,7 @@ public class SingleMapSelection : Menu
 
     private void LoadLevel()
     {
+        PlayerPrefs.SetString("editable", "yes");
         if (map == "Backyard") 
         {
             Debug.Log("Backyard");

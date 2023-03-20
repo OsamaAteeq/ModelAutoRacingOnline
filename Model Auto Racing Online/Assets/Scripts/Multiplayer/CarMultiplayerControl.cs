@@ -6,7 +6,7 @@ using UnityStandardAssets.CrossPlatformInput;
 namespace UnityStandardAssets.Vehicles.Car
 {
     [RequireComponent(typeof(CarController))]
-    public class CarUserControl : MonoBehaviour
+    public class CarMultiplayerControl : MonoBehaviour
     {
         internal enum InputType
         {
@@ -14,7 +14,7 @@ namespace UnityStandardAssets.Vehicles.Car
             Keyboard
         }
         private CarController m_Car; // the car controller we want to use
-        private MobileCarController mobile_Car; // the car controller we want to use
+        private MultiplayerCarController multi_Car; // the car controller we want to use
         [SerializeField] private InputType inputType = InputType.Touch;
         private float v;
         private float h;
@@ -23,7 +23,7 @@ namespace UnityStandardAssets.Vehicles.Car
         {
             // get the car controller
             m_Car = GetComponent<CarController>();
-            mobile_Car = GetComponent<MobileCarController>();
+            multi_Car = GetComponent<MultiplayerCarController>();
 
         }
 
@@ -34,22 +34,22 @@ namespace UnityStandardAssets.Vehicles.Car
             if (inputType == InputType.Touch)
             {
                 //float h = CrossPlatformInputManager.GetAxis("Horizontal");
-                h = mobile_Car.myCarH;
+                h = multi_Car.myCarH;
                 //float v = CrossPlatformInputManager.GetAxis("Vertical");
-                v = mobile_Car.myCarV;
+                v = multi_Car.myCarV;
             }
 
             //for testing only
             if (inputType == InputType.Keyboard)
             {
-                h = 0;v = 0;
-                if (Input.GetKey(KeyCode.UpArrow))
+                h = 0; v = 0;
+                if (Input.GetKey(KeyCode.W))
                     v = 1;
-                if (Input.GetKey(KeyCode.DownArrow))
+                if (Input.GetKey(KeyCode.S))
                     v = -1;
-                if (Input.GetKey(KeyCode.LeftArrow))
+                if (Input.GetKey(KeyCode.A))
                     h = -1;
-                if (Input.GetKey(KeyCode.RightArrow))
+                if (Input.GetKey(KeyCode.D))
                     h = 1;
             }
             //for testing only

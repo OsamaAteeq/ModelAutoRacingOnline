@@ -17,19 +17,12 @@ public class GarageMenu : Menu
     [SerializeField] private Button _modifyButton;
 
     private string money;
-
-    private void Start()
+    override
+    public void SetEnable(int value)
     {
+        base.SetEnable(value);
         money = "" + PlayerPrefs.GetInt("money", 0);
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-
-        /*OnButtonPressed(_nextCarButton, HandleNextButtonPressed);
-        OnButtonPressed(_previousCarButton, HandlePreviousButtonPressed);
-        OnButtonPressed(_selectButton, HandleSelectButtonPressed);
-        OnButtonPressed(_modifyButton, HandleModifyButtonPressed);
-
-        OnButtonPressed(_backButton, HandleBackButtonPressed);
-        OnButtonPressed(_storeButton, HandleStoreButtonPressed);*/
     }
 
     public void HandleBackButtonPressed()

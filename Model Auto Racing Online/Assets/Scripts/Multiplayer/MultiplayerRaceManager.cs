@@ -6,10 +6,9 @@ using Random = UnityEngine.Random;
 
 using UnityStandardAssets.Vehicles.Car;
 using UnityStandardAssets.Utility;
-using UnityEngine.SceneManagement;
-using System.Collections;
 
-public class RaceManager : MonoBehaviour
+
+public class MultiplayerRaceManager : MonoBehaviour
 {
 
     internal enum RaceType
@@ -24,8 +23,6 @@ public class RaceManager : MonoBehaviour
     private float _secondsForEachLap;
     [SerializeField]
     private int _winInTop = 3;
-    [SerializeField]
-    private int _awardFactor = 3;
     [SerializeField]
     private int _elemenateEachLap = 1;
 
@@ -80,7 +77,7 @@ public class RaceManager : MonoBehaviour
 
     private CarController[] cars;
 
-    private List<CarAIControl> Aicars = new List<CarAIControl>();
+    private List<CarMultiplayerControl> Multiplayercars = new List<CarMultiplayerControl>();
     private List<CarController> passedCars = new List<CarController>();
     private CarUserControl player;
     private int totalVehicles = 0;
@@ -97,7 +94,6 @@ public class RaceManager : MonoBehaviour
         laps = PlayerPrefs.GetInt("lap", 2);
         opp = PlayerPrefs.GetInt("opponent", 2);
         type = PlayerPrefs.GetString("type", "Race");
-        _awardFactor = PlayerPrefs.GetInt("factor", 3);
 
         secondsForTrial = laps * _secondsForEachLap;
         if (PlayerPrefs.GetString("race", "yes") == "no") 
@@ -134,32 +130,32 @@ public class RaceManager : MonoBehaviour
                 player.enabled = false;
                 Debug.Log("Player Found");
             }
-            else if (car.gameObject.GetComponent<CarAIControl>())
+            else if (car.gameObject.GetComponent<CarMultiplayerControl>())
             {
             
-                CarAIControl aicar = car.gameObject.GetComponent<CarAIControl>();
-                Aicars.Add(aicar);
-                aicar.enabled = false;
-                Debug.Log("AI Found");
+                CarMultiplayerControl Multiplayercar = car.gameObject.GetComponent<CarMultiplayerControl>();
+                Multiplayercars.Add(Multiplayercar);
+                Multiplayercar.enabled = false;
+                Debug.Log("Multiplayer Found");
             }
             car.GetComponent<CarSelfRighting>().SetActive(false);
         }
         int opp_limit;
         if (race == true && type!="Time")
         {
-            opp_limit = Aicars.Count - opp;
+            opp_limit = Multiplayercars.Count - opp;
         }
         else
         {
-            opp_limit = Aicars.Count;
+            opp_limit = Multiplayercars.Count;
         }
         Debug.Log("OPP_LIMIT = " + opp_limit);
-        while (opp_limit > 0 && Aicars.Count>0) 
+        while (opp_limit > 0 && Multiplayercars.Count>0) 
         {
-            Debug.Log("REMOVED : "+Aicars.Count);
-            int r = Random.Range(0, Aicars.Count - 1);
-            Aicars[r].gameObject.SetActive(false);
-            Aicars.RemoveAt(r);
+            Debug.Log("REMOVED : "+Multiplayercars.Count);
+            int r = Random.Range(0, Multiplayercars.Count - 1);
+            Multiplayercars[r].gameObject.SetActive(false);
+            Multiplayercars.RemoveAt(r);
             opp_limit--;
             totalVehicles--;
         }
@@ -221,9 +217,9 @@ public class RaceManager : MonoBehaviour
                 }
                 semaphore.material = sem3;
                 startrace = true;
-                if (Aicars.Count > 0)
+                if (Multiplayercars.Count > 0)
                 {
-                    foreach (CarAIControl car in Aicars)
+                    foreach (CarMultiplayerControl car in Multiplayercars)
                     {
                         car.enabled = true;
                         car.GetComponent<CarSelfRighting>().SetActive(true);
@@ -277,7 +273,6 @@ public class RaceManager : MonoBehaviour
                     finished = true;
                     beeps[3].Stop();
                     beeps[4].PlayOneShot(loserace);
-                    GoBack();
                 }
             }
         }
@@ -291,21 +286,6 @@ public class RaceManager : MonoBehaviour
             entertostart.enabled = false;
         }
     }
-    public void GoBack() 
-    {
-
-        PlayerPrefs.SetInt("factor", 3);
-        StartCoroutine(waiter());
-        
-    }
-    private IEnumerator waiter()
-    {   
-        yield return new WaitForSeconds(3f);
-        SceneManager.LoadSceneAsync("Menu");
-        //my code here after 3 seconds
-    }
-
-
     public void addlap(Transform who, int lap, Color color)
     {
         if (lap == laps + 1)
@@ -320,18 +300,15 @@ public class RaceManager : MonoBehaviour
                 if (wincount <= _winInTop)
                 {
                     int money = PlayerPrefs.GetInt("money",0);
-                    PlayerPrefs.SetInt("money", money + ((opp+lap)*_awardFactor));
+                    PlayerPrefs.SetInt("money", money + 10);
                     beeps[3].Stop();
                     beeps[4].PlayOneShot(winrace);
-                    GoBack();
-
+                    
                 }
                 else
                 {
                     beeps[3].Stop();
                     beeps[4].PlayOneShot(loserace);
-                    GoBack();
-
                 }
                 finished = true;
             }
@@ -371,7 +348,6 @@ public class RaceManager : MonoBehaviour
                                 finished = true;
                                 beeps[3].Stop();
                                 beeps[4].PlayOneShot(loserace);
-                                GoBack();
                             }
                             Debug.Log("Deactivated : "+car.gameObject.name);
                             totalVehicles--;
@@ -421,7 +397,6 @@ public class RaceManager : MonoBehaviour
                         finished = true;
                         beeps[3].Stop();
                         beeps[4].PlayOneShot(loserace);
-                        GoBack();
                     }
                     Debug.Log("Deactivated Lapped 2 times : " + toRemove.name);
                     num_to_remove--;
@@ -479,4 +454,5 @@ public class RaceManager : MonoBehaviour
         myText.text = (wincount) + ".   " + string.Format("{0:00} : {1:00} : {2:00}", minutes, seconds, fraction); ;
         who.gameObject.SetActive(false);
     }
+    
 }

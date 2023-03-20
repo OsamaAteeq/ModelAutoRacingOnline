@@ -17,17 +17,12 @@ public class PlayMenu : Menu
 
     private string money;
 
-    private void Start()
+    override
+    public void SetEnable(int value)
     {
+        base.SetEnable(value);
         money = "" + PlayerPrefs.GetInt("money", 0);
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-
-        /*OnButtonPressed(_singleplayerButton, HandleSingleplayerButtonPressed);
-        OnButtonPressed(_multiplayerButton, HandleMultiplayerButtonPressed);
-        OnButtonPressed(_garageButton, HandleGarageButtonPressed);
-
-        OnButtonPressed(_backButton, HandleBackButtonPressed);
-        OnButtonPressed(_storeButton, HandleStoreButtonPressed);*/
     }
 
     public void HandleBackButtonPressed()

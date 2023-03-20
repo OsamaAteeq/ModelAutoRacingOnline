@@ -16,20 +16,13 @@ public class MultiplayerMenu : Menu
     [SerializeField] private Button _tournament2Button;
 
     private string money;
-
-    private void Start()
+    override
+    public void SetEnable(int value)
     {
+        base.SetEnable(value);
         money = "" + PlayerPrefs.GetInt("money", 0);
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-
-        /*OnButtonPressed(_raceButton, HandleRaceButtonPressed);
-        OnButtonPressed(_tournamentButton, HandleTournamentButtonPressed);
-        OnButtonPressed(_tournament2Button, HandleTournament2ButtonPressed);
-
-        OnButtonPressed(_backButton, HandleBackButtonPressed);
-        OnButtonPressed(_storeButton, HandleStoreButtonPressed);*/
     }
-
     public void HandleBackButtonPressed()
     {
         _menuManager.SwitchMenu(MenuType.Play);

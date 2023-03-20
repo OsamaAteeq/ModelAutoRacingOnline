@@ -20,21 +20,12 @@ public class OptionsMenu : Menu
 
     private string money;
 
-    private void Start()
+    override
+    public void SetEnable(int value)
     {
+        base.SetEnable(value);
         money = "" + PlayerPrefs.GetInt("money", 0);
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-
-        /*OnButtonPressed(_volumeButton, HandleNotImplemented);
-        OnButtonPressed(_controlsButton, HandleNotImplemented);
-        OnButtonPressed(_graphicsButton, HandleNotImplemented);
-        OnButtonPressed(_achievmentsButton, HandleNotImplemented);
-        OnButtonPressed(_helpButton, HandleNotImplemented);
-        OnButtonPressed(_creditsButton, HandleNotImplemented);
-
-
-        OnButtonPressed(_backButton, HandleBackButtonPressed);
-        OnButtonPressed(_storeButton, HandleStoreButtonPressed);*/
     }
     public void HandleNotImplemented()
     {

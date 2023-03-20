@@ -17,18 +17,16 @@ public class SingleplayerMenu : Menu
 
     private string money;
 
-    private void Start()
+    override
+    public void SetEnable(int value)
     {
+        base.SetEnable(value);
+        PlayerPrefs.SetString("editable", "yes");
         money = "" + PlayerPrefs.GetInt("money", 0);
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-
-        /*OnButtonPressed(_raceButton, HandleRaceButtonPressed);
-        OnButtonPressed(_tournamentButton, HandleTournamentButtonPressed);
-        OnButtonPressed(_tournament2Button, HandleTournament2ButtonPressed);
-
-        OnButtonPressed(_backButton, HandleBackButtonPressed);
-        OnButtonPressed(_storeButton, HandleStoreButtonPressed);*/
     }
+
+   
 
     public void HandleBackButtonPressed()
     {
@@ -72,7 +70,7 @@ public class SingleplayerMenu : Menu
     }
     public void HandleTournamentButtonPressed()
     {
-        Debug.Log("NOT IMPLEMENTED YET");
+        _menuManager.SwitchMenu(MenuType.OfflineTournament);
     }
     public void HandleTournament2ButtonPressed()
     {
