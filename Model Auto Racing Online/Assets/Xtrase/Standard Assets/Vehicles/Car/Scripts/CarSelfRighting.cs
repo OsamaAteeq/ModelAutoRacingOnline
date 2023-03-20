@@ -11,7 +11,7 @@ namespace UnityStandardAssets.Vehicles.Car
         [SerializeField] private float m_WaitOffTrack = 10f;           // time to wait before self righting
         [SerializeField] private float m_WaitTryingToMoveTime = 1f;           // time car should be trying to move
         [SerializeField] private float m_VelocityThreshold = 1f;  // the velocity below which the car is considered stationary for self-righting
-        private bool isActive = true;
+        private bool isActive = false;
 
         private float m_LastOkTime; // the last time that the car was in an OK state
         private float m_LastOkProgress; // the last time that the car was in an OK state
@@ -52,6 +52,12 @@ namespace UnityStandardAssets.Vehicles.Car
                 if (Time.time > m_LastOkTime + m_WaitTryingToMoveTime)
                 {
                     shouldRight = true;
+                    Debug.Log("1");
+                }
+                if (Time.time > m_LastOkTime + m_WaitTryingToMoveTime && m_Rigidbody.velocity.magnitude > m_VelocityThreshold)
+                {
+                    shouldRight = false;
+                    Debug.Log("1 - negate");
                 }
                 if (Time.time > m_LastProgressing + m_WaitOffTrack)
                 {
@@ -61,6 +67,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 if (Time.time > m_LastOkTime + m_WaitTime)
                 {
                     shouldRight = false;
+                    Debug.Log("3");
                     RightCar();
                 }
             }
@@ -80,6 +87,7 @@ namespace UnityStandardAssets.Vehicles.Car
         // put the car back the right way up:
         private void RightCar()
         {
+            Debug.Log("BOUNCE");
             // set the correct orientation for the car, and lift it off the ground a little
             m_CarController.resetIt();
             transform.position = m_waypointProgressTracker.progressPoint.position;

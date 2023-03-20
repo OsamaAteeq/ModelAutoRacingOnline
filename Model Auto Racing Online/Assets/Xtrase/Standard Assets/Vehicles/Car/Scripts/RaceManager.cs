@@ -10,6 +10,7 @@ using UnityStandardAssets.Utility;
 
 public class RaceManager : MonoBehaviour
 {
+
     internal enum RaceType
     {
         Elimination,
@@ -19,7 +20,7 @@ public class RaceManager : MonoBehaviour
     [SerializeField]
     private RaceType raceType = RaceType.Race;
     [SerializeField]
-    private float _secondsForTrial;
+    private float _secondsForEachLap;
     [SerializeField]
     private int _winInTop = 3;
     [SerializeField]
@@ -80,13 +81,46 @@ public class RaceManager : MonoBehaviour
     private List<CarController> passedCars = new List<CarController>();
     private CarUserControl player;
     private int totalVehicles = 0;
-
+    private int opp;
+    private string type;
+    private bool race = true;
+    private float secondsForTrial;
     public GameObject route;
+
+
     private void Start()
     {
+        //PlayerPref
+        laps = PlayerPrefs.GetInt("lap", 2);
+        opp = PlayerPrefs.GetInt("opponent", 2);
+        type = PlayerPrefs.GetString("type", "Race");
+
+        secondsForTrial = laps * _secondsForEachLap;
+        if (PlayerPrefs.GetString("race", "yes") == "no") 
+            { race = false; }
+        else 
+            { race = true; }
+        switch (type) 
+        {
+            case "Time":
+                raceType = RaceType.TimeTrial;
+                break;
+            case "Elim":
+                raceType = RaceType.Elimination;
+                break;
+            case "Race":
+                raceType = RaceType.Race;
+                break;
+            default:
+                raceType = RaceType.Race;
+                break;
+        }
+        Debug.Log("LAPS: " + laps + ": OPP : " + opp + " : Type : " + type + " : RACE : " + race);
+
         beeps = place.GetComponents<AudioSource>();
         beeps[4].PlayOneShot(racestart);
         cars = GetComponentsInChildren<CarController>();
+        
         foreach (CarController car in cars)
         {
             totalVehicles++;
@@ -98,6 +132,7 @@ public class RaceManager : MonoBehaviour
             }
             else if (car.gameObject.GetComponent<CarAIControl>())
             {
+            
                 CarAIControl aicar = car.gameObject.GetComponent<CarAIControl>();
                 Aicars.Add(aicar);
                 aicar.enabled = false;
@@ -105,24 +140,46 @@ public class RaceManager : MonoBehaviour
             }
             car.GetComponent<CarSelfRighting>().SetActive(false);
         }
+        int opp_limit;
+        if (race == true && type!="Time")
+        {
+            opp_limit = Aicars.Count - opp;
+        }
+        else
+        {
+            opp_limit = Aicars.Count;
+        }
+        Debug.Log("OPP_LIMIT = " + opp_limit);
+        while (opp_limit > 0 && Aicars.Count>0) 
+        {
+            Debug.Log("REMOVED : "+Aicars.Count);
+            int r = Random.Range(0, Aicars.Count - 1);
+            Aicars[r].gameObject.SetActive(false);
+            Aicars.RemoveAt(r);
+            opp_limit--;
+            totalVehicles--;
+        }
+        cars = GetComponentsInChildren<CarController>();
+        Debug.Log("CAR" + cars.Length + ": VEHICLES : " + totalVehicles);
         if (raceType == RaceType.Elimination)
         {
-            int laps_check = (totalVehicles - 1) % _elemenateEachLap;
-            if (laps_check == 0)
+            int elemenation_check = laps % (totalVehicles-1);
+            if (elemenation_check == 0)
             {
-                laps = (totalVehicles - 1) / _elemenateEachLap;
+                _elemenateEachLap = laps / (totalVehicles - 1);
             }
             else
             {
-                laps = ((totalVehicles - 1) / _elemenateEachLap) + 1;
+                _elemenateEachLap = (laps / (totalVehicles-1)) + 1;
             }
-            Debug.Log("LAPS: " + laps + ": WININTOP : " + _winInTop);
+            
         }
 
     }
+
     private void Update()
     {
-        if (!startrace && (power.hasChange() || steer.isWheelHeld()))
+        if (race&&!startrace && (power.hasChange() || steer.isWheelHeld()))
         {
             startcount = true;
         }
@@ -170,6 +227,7 @@ public class RaceManager : MonoBehaviour
                 }
                 player.enabled = true;
                 player.GetComponent<CarSelfRighting>().SetActive(true);
+                Debug.Log("SELFRIGHTING");
 
             }
             else if (count < 4.5f)
@@ -210,7 +268,7 @@ public class RaceManager : MonoBehaviour
             lapscounter.text = "Lap " + currentlap + " / " + laps;
             if (raceType == RaceType.TimeTrial)
             {
-                if (_secondsForTrial <= ((minutes * 60) + seconds))
+                if (secondsForTrial <= ((minutes * 60) + seconds))
                 {
                     finished = true;
                     beeps[3].Stop();
@@ -219,7 +277,7 @@ public class RaceManager : MonoBehaviour
             }
         }
 
-        if (!finished && !startrace && !startcount)
+        if (race && !finished && !startrace && !startcount)
         {
             entertostart.enabled = true;
         }
