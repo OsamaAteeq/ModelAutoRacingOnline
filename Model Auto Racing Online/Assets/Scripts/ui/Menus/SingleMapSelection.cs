@@ -68,7 +68,6 @@ public class SingleMapSelection : Menu
     [SerializeField] private Button _freeRoamButton;
     [SerializeField] private Button _raceButton;
 
-    [SerializeField] private TextMeshProUGUI _raceText;
 
     private string money;
     private int lap;
@@ -122,7 +121,6 @@ public class SingleMapSelection : Menu
 
         type = PlayerPrefs.GetString("type", "Race");
         _typeText.text = type;
-        _raceText.text = type;
 
 
         difficulty = PlayerPrefs.GetString("difficulty", "Hard");
@@ -321,7 +319,6 @@ public class SingleMapSelection : Menu
                     type = types[types.Count-1];
                 }
                 PlayerPrefs.SetString("type", type);
-                _raceText.text = type;
                 _typeText.text = type;
                 if (type == "Time")
                 {
@@ -357,7 +354,6 @@ public class SingleMapSelection : Menu
                     type = types[0];
                 }
                 PlayerPrefs.SetString("type", type);
-                _raceText.text = type;
                 _typeText.text = type;
                 if (type == "Time")
                 {
