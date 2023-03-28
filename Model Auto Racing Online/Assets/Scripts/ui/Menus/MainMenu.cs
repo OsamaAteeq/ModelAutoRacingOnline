@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+using BayatGames.SaveGameFree;
+using Data;
 
 public class MainMenu : Menu
 {
@@ -16,8 +18,10 @@ public class MainMenu : Menu
     [SerializeField] private Button _optionsButton;
     [SerializeField] private Button _quitButton;
 
+    private PersonalData player;
     private string username;
     private string money;
+    private Color color;
     /*
     private void Update()
     {
@@ -33,9 +37,23 @@ public class MainMenu : Menu
     public void SetEnable(int value) 
     {
         base.SetEnable(value);
-        username = PlayerPrefs.GetString("username", "User Name");
+        PersonalData temp = PersonalData.Create("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
+
+        player = SaveGame.Load<PersonalData>("player", temp);
+        username = player.display_name;
+        money = ""+player.cash;
+        color = player.color;
+
         _profileButton.GetComponentInChildren<TextMeshProUGUI>().text = username;
-        money = "" + PlayerPrefs.GetInt("money", 0);
+        Image[] temp2 = _profileButton.GetComponentsInChildren<Image>();
+        foreach (Image t in temp2)
+        {
+            if (t != _profileButton.GetComponent<Image>()) 
+            {
+                t.color = color;
+                break;
+            }
+        }
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
     }
 

@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+using Data;
+using System.Collections.Generic;
 
 public class SingleplayerMenu : Menu
 {
@@ -14,6 +16,11 @@ public class SingleplayerMenu : Menu
     [SerializeField] private Button _raceButton;
     [SerializeField] private Button _tournamentButton;
     [SerializeField] private Button _tournament2Button;
+
+    [SerializeField] private GridLayoutGroup _container;
+
+    [Header("Scriptable Objects :")]
+    [SerializeField] private List<TournamentData> _tournaments = new List<TournamentData>();
 
     private string money;
 
