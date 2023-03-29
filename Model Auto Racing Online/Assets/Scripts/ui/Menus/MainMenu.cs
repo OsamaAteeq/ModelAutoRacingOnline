@@ -38,8 +38,15 @@ public class MainMenu : Menu
     {
         base.SetEnable(value);
         PersonalData temp = PersonalData.Create("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
-
-        player = SaveGame.Load<PersonalData>("player", temp);
+        if (SaveGame.Exists("player"))
+        {
+            player = SaveGame.Load<PersonalData>("player", temp);
+        }
+        else
+        {
+            player = temp;
+            SaveGame.Save<PersonalData>("player", temp);
+        }
         username = player.display_name;
         money = ""+player.cash;
         color = player.color;

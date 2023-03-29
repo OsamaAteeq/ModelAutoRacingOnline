@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using Data;
 using System.Collections.Generic;
+using BayatGames.SaveGameFree;
 
 public class SingleplayerMenu : Menu
 {
@@ -14,22 +15,52 @@ public class SingleplayerMenu : Menu
     [SerializeField] private Button _storeButton;
 
     [SerializeField] private Button _raceButton;
-    [SerializeField] private Button _tournamentButton;
-    [SerializeField] private Button _tournament2Button;
 
     [SerializeField] private GridLayoutGroup _container;
 
     [Header("Scriptable Objects :")]
     [SerializeField] private List<TournamentData> _tournaments = new List<TournamentData>();
 
+    [Header("Button Prefab :")]
+    [SerializeField] private Button _tournamentButton;
+
     private string money;
+
+    public void Start()
+    {
+        foreach (TournamentData td in _tournaments) 
+        {
+            GameObject _btn = Instantiate<GameObject>(_tournamentButton.gameObject, _container.transform);
+            TextMeshProUGUI[] tmps = _btn.GetComponentsInChildren<TextMeshProUGUI>();
+            _btn.GetComponent<Image>().sprite = td.buttonPic;
+            int c = 0;
+            foreach (TextMeshProUGUI t in tmps) 
+            {
+                if (c == 1) 
+                {
+                    t.text = td.name;
+                }
+                if (c == 0)
+                {
+                    t.text = "Entry "+td.cost;
+                }
+                c++;
+            }
+            TournamentData td2 = td;
+            _btn.GetComponent<Button>().onClick.AddListener(delegate { HandleTournamentButtonPressed(td2); });
+        }
+        _container.transform.LeanSetLocalPosX((_container.cellSize.x+ _container.spacing.x)*_tournaments.Count);
+        
+    }
 
     override
     public void SetEnable(int value)
     {
         base.SetEnable(value);
-        PlayerPrefs.SetString("editable", "yes");
-        money = "" + PlayerPrefs.GetInt("money", 0);
+        SaveGame.Delete("current_tournament");
+        PersonalData temp = PersonalData.Create("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
+        PersonalData player = SaveGame.Load<PersonalData>("player", temp);
+        money = "" + player.cash;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
     }
 
@@ -75,15 +106,13 @@ public class SingleplayerMenu : Menu
     {
         Debug.Log("NOT IMPLEMENTED YET");
     }
-    public void HandleTournamentButtonPressed()
+    public void HandleTournamentButtonPressed(TournamentData td)
     {
+        SaveGame.Save<TournamentData>("current_tournament", td);
         _menuManager.SwitchMenu(MenuType.OfflineTournament);
     }
-    public void HandleTournament2ButtonPressed()
-    {
-        Debug.Log("NOT IMPLEMENTED YET");
-    }
-    
+
+
     #region Event Handler
 
     public void loadGameScene()
