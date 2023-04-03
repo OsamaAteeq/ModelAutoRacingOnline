@@ -11,8 +11,7 @@ using System.Collections;
 
 public class RaceManager : MonoBehaviour
 {
-
-    internal enum RaceType
+    internal enum RaceType      //use public data enum intead of this
     {
         Elimination,
         Race,

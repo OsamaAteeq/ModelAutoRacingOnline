@@ -58,8 +58,8 @@ public class SingleplayerMenu : Menu
     {
         base.SetEnable(value);
         SaveGame.Delete("current_tournament");
-        PersonalData temp = PersonalData.Create("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
-        PersonalData player = SaveGame.Load<PersonalData>("player", temp);
+        PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
+        PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
         money = "" + player.cash;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
     }
@@ -108,7 +108,14 @@ public class SingleplayerMenu : Menu
     }
     public void HandleTournamentButtonPressed(TournamentData td)
     {
-        SaveGame.Save<TournamentData>("current_tournament", td);
+        TournamentSaver saver = new TournamentSaver();
+        saver.cost = td.cost;
+        saver.buttonPic = td.buttonPic;
+        foreach (RaceData rd in td.races) 
+        {
+            saver.races.Add(new RaceSaver(new MapSaver(rd.map.scene_name),rd.lap,rd.opponent,rd.is_race,rd.type,rd.order,rd.difficulty,rd.income_factor,rd.cost));
+        }
+        SaveGame.Save<TournamentSaver>("current_tournament", saver);
         _menuManager.SwitchMenu(MenuType.OfflineTournament);
     }
 

@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+using Data;
+using BayatGames.SaveGameFree;
 
 public class OptionsMenu : Menu
 {
@@ -24,7 +26,9 @@ public class OptionsMenu : Menu
     public void SetEnable(int value)
     {
         base.SetEnable(value);
-        money = "" + PlayerPrefs.GetInt("money", 0);
+        PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
+        PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
+        money = "" + player.cash;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
     }
     public void HandleNotImplemented()

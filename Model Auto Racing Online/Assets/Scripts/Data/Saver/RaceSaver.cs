@@ -2,34 +2,18 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace Data
 {
-    [CreateAssetMenu(fileName = "new Race", menuName = "Race")]
-    public class RaceData : ScriptableObject
+    public class RaceSaver
     {
-        public enum RaceType
-        {
-            Race,
-            TimeTrail,
-            Elimination
-        }
-        public enum RaceOrder
-        {
-            Straight
-        }
-        public enum RaceDifficulty
-        {
-            Hard
-        }
         public int lap;
-        public MapData map;
+        public MapSaver map;
         public int opponent;
         public bool is_race;
-        public RaceType type;
-        public RaceOrder order;
-        public RaceDifficulty difficulty;
+        public RaceData.RaceType type;
+        public RaceData.RaceOrder order;
+        public RaceData.RaceDifficulty difficulty;
         public float income_factor;
         public int cost;
         public Sprite buttonPic;
-        public Texture2D buttonPic2;
         private bool is_tournament = false;
 
         [System.Serializable]
@@ -40,40 +24,36 @@ namespace Data
         }
         public List<Standing> standings = new List<Standing>();
 
-        public static RaceData Create(MapData map, int lap, int opponent, bool is_race, RaceType type, RaceOrder order, RaceDifficulty difficulty, float income_factor, int cost)
+        public RaceSaver (MapSaver map, int lap, int opponent, bool is_race, RaceData.RaceType type, RaceData.RaceOrder order, RaceData.RaceDifficulty difficulty, float income_factor, int cost)
         {
-            var data = ScriptableObject.CreateInstance<RaceData>();
-            data.lap = lap;
-            data.map = map;
-            data.opponent = opponent;
-            data.is_race = is_race;
-            data.type = type;
-            data.income_factor = income_factor;
-            data.cost = cost;
-            data.is_tournament = false;
-            data.order = order;
-            data.difficulty = difficulty;
+            this.lap = lap;
+            this.map = map;
+            this.opponent = opponent;
+            this.is_race = is_race;
+            this.type = type;
+            this.income_factor = income_factor;
+            this.cost = cost;
+            this.is_tournament = false;
+            this.order = order;
+            this.difficulty = difficulty;
 
             List<Standing> s = new List<Standing>();
-            data.standings = s;
-
-            return data;
+            this.standings = s;
 
         }
-        public static RaceData Create(MapData map)
+
+        public RaceSaver (MapSaver map)
         {
-            var data = ScriptableObject.CreateInstance<RaceData>();
-            data.lap = 0;
-            data.map = map;
-            data.opponent = 0;
-            data.is_race = false;
-            data.type = RaceType.Race;
-            data.order = RaceOrder.Straight;
-            data.difficulty = RaceDifficulty.Hard;
-            data.income_factor = 0;
-            data.cost = 0;
-            data.is_tournament = false;
-            return data;
+            this.lap = 0;
+            this.map = map;
+            this.opponent = 0;
+            this.is_race = false;
+            this.type = RaceData.RaceType.Race;
+            this.order = RaceData.RaceOrder.Straight;
+            this.difficulty = RaceData.RaceDifficulty.Hard;
+            this.income_factor = 0;
+            this.cost = 0;
+            this.is_tournament = false;
 
         }
 

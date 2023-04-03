@@ -18,7 +18,7 @@ public class MainMenu : Menu
     [SerializeField] private Button _optionsButton;
     [SerializeField] private Button _quitButton;
 
-    private PersonalData player;
+    private PersonalSaver player;
     private string username;
     private string money;
     private Color color;
@@ -37,15 +37,15 @@ public class MainMenu : Menu
     public void SetEnable(int value) 
     {
         base.SetEnable(value);
-        PersonalData temp = PersonalData.Create("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
+        PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
         if (SaveGame.Exists("player"))
         {
-            player = SaveGame.Load<PersonalData>("player", temp);
+            player = SaveGame.Load<PersonalSaver>("player", temp);
         }
         else
         {
             player = temp;
-            SaveGame.Save<PersonalData>("player", temp);
+            SaveGame.Save<PersonalSaver>("player", temp);
         }
         username = player.display_name;
         money = ""+player.cash;

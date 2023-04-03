@@ -5,7 +5,7 @@ namespace Data
     [CreateAssetMenu(fileName = "new Enemy List", menuName = "Enemies List")]
     public class Enemies : ScriptableObject
     {
-        public List<PersonalData> enemy_list = new List<PersonalData>();
+        public List<PersonalSaver> enemy_list = new List<PersonalSaver>();
         
     }
 }

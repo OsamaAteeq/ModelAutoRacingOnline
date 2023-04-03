@@ -4,27 +4,20 @@ using UnityEngine.UI;
 
 namespace Data
 {
-    [CreateAssetMenu(fileName = "new Map", menuName = "Map")]
-    public class MapData : ScriptableObject
+    public class MapSaver 
     {
-        public new string name;
+        public string name;
         public int max_opponents;
         public int max_laps;
+        [SerializeField]
         public Sprite map_image;
         public string scene_name;
         public Scene map_scene;
 
-        private void Awake()
+        public MapSaver (string scene_name)
         {
-            map_scene = SceneManager.GetSceneByName(scene_name);
-        }
-
-        public static MapData Create(string scene_name)
-        {
-            var data = ScriptableObject.CreateInstance<MapData>();
-            data.scene_name = scene_name;
-            data.map_scene = SceneManager.GetSceneByName(scene_name);
-            return data;
+            this.scene_name = scene_name;
+            this.map_scene = SceneManager.GetSceneByName(scene_name);
         }
 
         /*

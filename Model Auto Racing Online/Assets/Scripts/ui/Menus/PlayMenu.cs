@@ -23,8 +23,8 @@ public class PlayMenu : Menu
     public void SetEnable(int value)
     {
         base.SetEnable(value);
-        PersonalData temp = PersonalData.Create("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
-        PersonalData player = SaveGame.Load<PersonalData>("player", temp);
+        PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
+        PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
         money = "" + player.cash;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
     }

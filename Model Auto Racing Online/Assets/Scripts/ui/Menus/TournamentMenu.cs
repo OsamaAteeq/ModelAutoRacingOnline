@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+using Data;
+using BayatGames.SaveGameFree;
+using System.Collections.Generic;
 
 public class TournamentMenu : Menu
 {
@@ -13,38 +16,100 @@ public class TournamentMenu : Menu
 
     [SerializeField] private Canvas _blocker;
 
+    [SerializeField] private GridLayoutGroup _container;
+
+    [Header("Button Prefab :")]
     [SerializeField] private Button _raceButton;
-    [SerializeField] private Button _timeTrialButton;
-    [SerializeField] private Button _eliminationButton;
 
     private int intmoney;
     private string money;
-    private string tournament_bought;
+    private bool tournament_bought = false;
     private bool opened = false;
-
+    private TournamentSaver tournament;
+    private InventorySaver inventory;
+    private Button[] buttons;
+    private PersonalSaver player;
+    private void Start()
+    {
+        
+    }
     override
     public void SetEnable(int value)
     {
-        base.SetEnable(value);
-        money = "" + PlayerPrefs.GetInt("money", 0);
-        intmoney = PlayerPrefs.GetInt("money", 0);
+        PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
+        player = SaveGame.Load<PersonalSaver>("player", temp);
+        money = "" + player.cash;
+        intmoney = player.cash;
+        _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
 
-        tournament_bought = PlayerPrefs.GetString("bought1", "no");
-        if (tournament_bought == "yes" || intmoney >= 250)
+        tournament_bought = false;
+        tournament = SaveGame.Load<TournamentSaver>("current_tournament");
+        if (SaveGame.Exists("inventory"))
         {
-            if (intmoney >= 250 && tournament_bought == "no")
+            inventory = SaveGame.Load<InventorySaver>("inventory");
+        }
+        else 
+        {
+            inventory = new InventorySaver();
+        }
+        int count = 0;
+        foreach (RaceSaver rd in tournament.races)
+        {
+            count++;
+            GameObject _btn = Instantiate<GameObject>(_raceButton.gameObject, _container.transform);
+            TextMeshProUGUI[] tmps = _btn.GetComponentsInChildren<TextMeshProUGUI>();
+            
+            Debug.Log(rd.buttonPic);
+            _btn.GetComponent<Image>().sprite = rd.buttonPic;
+           
+
+            int c = 0;
+            foreach (TextMeshProUGUI t in tmps)
             {
-                PlayerPrefs.SetInt("money", intmoney - 250);
-                PlayerPrefs.SetString("bought1", "yes");
-                money = "" + PlayerPrefs.GetInt("money", 0);
+                if (c == 1)
+                {
+                    t.text = ""+rd.type;
+                }
+                if (c == 0)
+                {
+                    t.text = "Entry " + rd.cost;
+                }
+                c++;
+            }
+            RaceSaver rd2 = rd;
+            
+
+            _btn.GetComponent<Button>().onClick.AddListener(delegate { HandleRaceButtonPressed(rd2); });
+            _btn.GetComponent<Button>().interactable = false;
+        }
+        _container.transform.LeanSetLocalPosX((_container.cellSize.x + _container.spacing.x) * tournament.races.Count);
+        buttons = _container.GetComponentsInChildren<Button>();
+
+        base.SetEnable(value);
+        
+
+        foreach (TournamentSaver td in inventory.list_items) 
+        {
+            if (td == tournament) 
+            {
+                tournament_bought = true;
+                break;
+            }
+        }
+        if (tournament_bought || intmoney >= tournament.cost)
+        {
+            if (intmoney >= tournament.cost && !tournament_bought)
+            {
+                player.cash = (intmoney - tournament.cost);
+                inventory.list_items.Add(tournament);
+                money = "" + intmoney;
+                SaveGame.Save<PersonalSaver>("player", player);
+                SaveGame.Save<InventorySaver>("inventory", inventory);
             }
             _blocker.enabled = false;
         }
         if (_blocker.enabled)
         {
-            _raceButton.interactable = false;
-            _eliminationButton.interactable = false;
-            _timeTrialButton.interactable = false;
             _backButton.interactable = false;
             _storeButton.interactable = false;
         }
@@ -53,25 +118,26 @@ public class TournamentMenu : Menu
             _backButton.interactable = true;
             _storeButton.interactable = true;
         }
-        _raceButton.interactable = false;
-        _eliminationButton.interactable = false;
-        _timeTrialButton.interactable = false;
 
-        if (intmoney >= 10)
+        foreach (Button _btn in buttons)
         {
-            _raceButton.interactable = true;
+            int cost = int.MaxValue;
+            _btn.interactable = false;
+            TextMeshProUGUI[] tmps = _btn.GetComponentsInChildren<TextMeshProUGUI>();
+            int c = 0;
+            foreach (TextMeshProUGUI t in tmps)
+            {
+                if (c == 0)
+                {
+                    cost = (Int32.Parse(t.text.Substring(5).Trim()));
+                }
+                c++;
+            }
+            if (intmoney >= cost)
+            {
+                _btn.interactable = true;
+            }
         }
-        if (intmoney >= 20)
-        {
-            _timeTrialButton.interactable = true;
-        }
-        if (intmoney >= 30)
-        {
-            _eliminationButton.interactable = true;
-        }
-
-
-        _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
     }
 
     
@@ -87,9 +153,9 @@ public class TournamentMenu : Menu
 
     public void HandleBackButtonPressed()
     {
-        _menuManager.SwitchMenu(MenuType.Singleplayer);
 
-        PlayerPrefs.SetString("editable", "yes");
+        SaveGame.Delete("current_tournament");
+        _menuManager.SwitchMenu(MenuType.Singleplayer);
         /*_menuManager.CloseMenu();
         _menuManager.SwitchMenu(MenuType.Level);
         */
@@ -119,54 +185,15 @@ public class TournamentMenu : Menu
         */
     }
 
-    public void HandleRaceButtonPressed()
+    public void HandleRaceButtonPressed(RaceSaver race)
     {
-        intmoney -= 10;
-        PlayerPrefs.SetInt("money", intmoney);
-        money = "" + PlayerPrefs.GetInt("money", 0);
+        intmoney -= race.cost;
+        player.cash = intmoney;
+        SaveGame.Save<PersonalSaver>("player", player);
+        money = "" + intmoney;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-        PlayerPrefs.SetInt("lap", 3);
-        PlayerPrefs.SetString("map", "Backyard");
-        PlayerPrefs.SetInt("opponent", 3);
 
-        PlayerPrefs.SetString("type", "Race");
-        PlayerPrefs.SetString("race", "yes");
-        PlayerPrefs.SetString("editable", "no");
-        PlayerPrefs.SetInt("factor", 5);
-
-        _menuManager.SwitchMenu(MenuType.SingleplayerMaps);
-    }
-    public void HandleTimeTrialButtonPressed()
-    {
-        intmoney -= 20;
-        PlayerPrefs.SetInt("money", intmoney);
-        money = "" + PlayerPrefs.GetInt("money", 0);
-        _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-        PlayerPrefs.SetInt("lap", 2);
-        PlayerPrefs.SetString("map", "Backyard");
-        PlayerPrefs.SetInt("opponent", 0);
-
-        PlayerPrefs.SetString("type", "Time");
-        PlayerPrefs.SetString("race", "yes");
-        PlayerPrefs.SetString("editable", "no");
-        PlayerPrefs.SetInt("factor", 10);
-
-        _menuManager.SwitchMenu(MenuType.SingleplayerMaps);
-    }
-    public void HandleEliminationButtonPressed()
-    {
-        intmoney -= 30;
-        PlayerPrefs.SetInt("money", intmoney);
-        money = "" + PlayerPrefs.GetInt("money", 0);
-        _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-        PlayerPrefs.SetInt("lap", 5);
-        PlayerPrefs.SetString("map", "Backyard");
-        PlayerPrefs.SetInt("opponent", 5);
-
-        PlayerPrefs.SetString("type", "Elim");
-        PlayerPrefs.SetString("race", "yes");
-        PlayerPrefs.SetString("editable", "no");
-        PlayerPrefs.SetInt("factor", 15);
+        SaveGame.Save<RaceSaver>("current_race", race);
 
         _menuManager.SwitchMenu(MenuType.SingleplayerMaps);
     }
@@ -180,7 +207,6 @@ public class TournamentMenu : Menu
         yield return new WaitForSeconds(3f);
         opened = false;
         HandleBackButtonPressed();
-        //my code here after 3 seconds
     }
     #region Event Handler
 

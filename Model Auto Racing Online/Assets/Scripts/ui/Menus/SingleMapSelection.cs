@@ -5,18 +5,11 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using TMPro;
-
+using Data;
+using BayatGames.SaveGameFree;
 
 public class SingleMapSelection : Menu
 {
-    [Serializable]
-    private class Map
-    {
-        public string mapname;
-        public Sprite picture;
-        public int maxOpponents;
-        public int maxLaps;
-    }
 
     [Header("Inherit References :")]
     [SerializeField] private Button _backButton;
@@ -31,7 +24,7 @@ public class SingleMapSelection : Menu
     [SerializeField] private Button _previousMapButton;
     [SerializeField] private TextMeshProUGUI _mapText;
     [SerializeField] private Image _mapImage;
-    [SerializeField] private List<Map> maps = new List<Map>();
+    [SerializeField] private List<MapData> maps = new List<MapData>();
     //lap
     [Header("Lap :")]
     [SerializeField] private Button _nextLapButton;
@@ -49,7 +42,7 @@ public class SingleMapSelection : Menu
     [SerializeField] private Button _nextTypeButton;
     [SerializeField] private Button _previousTypeButton;
     [SerializeField] private TextMeshProUGUI _typeText;
-    [SerializeField] private List<string> types = new List<string>();
+    
     //difficulty
     [Header("Difficulty :")]
     [SerializeField] private Button _nextDifficultyButton;
@@ -70,27 +63,36 @@ public class SingleMapSelection : Menu
 
 
     private string money;
+    private RaceSaver race;
     private int lap;
     private int opp;
     private string type;
     private string difficulty;
     private string order;
     private string map;
-    private Map selected_map;
+    private MapSaver selected_map;
     private int temp = 1;
-    private string editable;
+    private List<string> types = new List<string>();
 
     public void Start()
     {
-        
+        RaceData.RaceType[] raceTypes = (RaceData.RaceType[]) System.Enum.GetValues(typeof(RaceData.RaceType));
+        for (int i = 0; i <raceTypes.Length; i++) 
+        {
+            if (raceTypes[i] == RaceData.RaceType.Elimination)
+                types.Add("Elim");
+            else if (raceTypes[i] == RaceData.RaceType.Race)
+                types.Add("Race");
+            else if (raceTypes[i] == RaceData.RaceType.TimeTrail)
+                types.Add("Time");
+        }
     }
 
     override
     public void SetEnable(int value)
     {
         base.SetEnable(value);
-        editable = PlayerPrefs.GetString("editable", "yes");
-        if (editable == "no")
+        if (SaveGame.Exists("current_tournament"))
         {
             _nextDifficultyButton.interactable = false;
             _nextLapButton.interactable = false;
@@ -110,48 +112,114 @@ public class SingleMapSelection : Menu
         }
 
 
-        money = "" + PlayerPrefs.GetInt("money", 0);
+        PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
+        PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
+        money = "" + player.cash;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-
-        lap = PlayerPrefs.GetInt("lap", 2);
+        if (SaveGame.Exists("current_race")) 
+        {
+            race = SaveGame.Load<RaceSaver>("current_race");
+        }
+        else 
+        {
+            MapSaver mp = new MapSaver(maps[0].scene_name);
+            mp.name = maps[0].name;
+            mp.max_laps = maps[0].max_laps;
+            mp.max_opponents = maps[0].max_opponents;
+            //mp.map_image = maps[0].map_image;
+            mp.map_image = maps[0].map_image;
+            race = new RaceSaver(mp,2,2,true,RaceData.RaceType.Race, RaceData.RaceOrder.Straight, RaceData.RaceDifficulty.Hard, 3f,0);
+            selected_map = mp;
+            SaveGame.Save<RaceSaver>("current_race", race);
+        }
+         
+        lap = race.lap;
         _lapText.text = "" + lap;
 
-        opp = PlayerPrefs.GetInt("opponent", 2);
+        opp = race.opponent;
         _opponentText.text = "" + opp;
 
-        type = PlayerPrefs.GetString("type", "Race");
+        switch (race.type) 
+        {
+            case RaceData.RaceType.Race:
+                type = "Race";
+                break;
+            case RaceData.RaceType.TimeTrail:
+                type = "Time";
+                break;
+            case RaceData.RaceType.Elimination:
+                type = "Elim";
+                break;
+            default:
+                type = "Race";
+                break;
+
+        }
         _typeText.text = type;
 
+        switch (race.difficulty)
+        {
+            case RaceData.RaceDifficulty.Hard:
+                difficulty = "Hard";
+                break;
+            default:
+                difficulty = "Hard";
+                break;
 
-        difficulty = PlayerPrefs.GetString("difficulty", "Hard");
+        }
         _difficultyText.text = difficulty;
 
-        order = PlayerPrefs.GetString("order", "Str");
+        switch (race.order)
+        {
+            case RaceData.RaceOrder.Straight:
+                order = "Str";
+                break;
+            default:
+                order = "Str";
+                break;
+
+        }
         _orderText.text = order;
 
-        map = PlayerPrefs.GetString("map", "Backyard");
-        _mapText.text = map;
-
-        foreach (Map m in maps)
+        
+        
+        selected_map = race.map;
+        selected_map.name = race.map.name;
+        map = selected_map.name;
+        _mapText.text = race.map.name;
+        //Debug.Log("MAP : " + race.map.map_image);
+        // Debug.Log("MAP : " + race.map.getImage());
+        //_mapImage.sprite = selected_map.map_image;
+        if (race.map.map_image != null)
         {
-            if (m.mapname == map)
+            _mapImage.sprite = selected_map.map_image;
+        }
+        else
+        {
+            for (int i = 0; i < maps.Count; i++)
             {
-                _mapImage.sprite = m.picture;
-                selected_map = m;
+                if (maps[i].scene_name == selected_map.scene_name)
+                {
+                    _mapImage.sprite = maps[i].map_image;
+                }
             }
         }
-        Debug.Log(map);
-        if (selected_map.maxLaps < lap)
+        //Debug.Log(selected_map.map_image);
+       // Debug.Log(selected_map.getImage());
+
+        if (selected_map.max_laps < lap)
         {
-            lap = selected_map.maxLaps;
+            lap = selected_map.max_laps;
             _lapText.text = "" + lap;
-            PlayerPrefs.SetInt("lap", lap);
+            race.lap = lap;
+            SaveGame.Save<RaceSaver>("current_race", race);
         }
-        if (selected_map.maxOpponents < opp)
+        if (selected_map.max_opponents < opp)
         {
-            opp = selected_map.maxLaps;
+            opp = selected_map.max_opponents;
             _opponentText.text = "" + opp;
-            PlayerPrefs.SetInt("opponent", opp);
+            race.opponent = opp;
+            SaveGame.Save<RaceSaver>("current_race", race);
         }
     }
     
@@ -160,44 +228,54 @@ public class SingleMapSelection : Menu
     {
         for (int i = 0; i < maps.Count; i++)
         {
-            if (maps[i].mapname == map)
+            if (maps[i].scene_name == selected_map.scene_name)
             {
                 if (i != 0)
                 {
                     Debug.Log("IFPREV");
-                    map = maps[i - 1].mapname;
-                    _mapImage.sprite = maps[i - 1].picture;
-                    selected_map = maps[i - 1];
+                    map = maps[i - 1].name;
+                    _mapImage.sprite = maps[i - 1].map_image;
+
+                    selected_map.name = maps[i - 1].name;
+                    selected_map.scene_name = maps[i - 1].scene_name;
+                    selected_map.max_laps = maps[i - 1].max_laps;
+                    selected_map.max_opponents = maps[i - 1].max_opponents;
+                    //selected_map.map_image = maps[i - 1].map_image;
+                    selected_map.map_image = (maps[i - 1].map_image);
 
                 }
 
                 else
                 {
                     Debug.Log("ELSEPREV");
-                    _mapImage.sprite = maps[maps.Count-1].picture;
-                    map = maps[maps.Count - 1].mapname;
-                    selected_map = maps[maps.Count - 1];
+                    _mapImage.sprite = maps[maps.Count-1].map_image;
+                    map = maps[maps.Count - 1].name;
+
+                    selected_map.name = maps[maps.Count - 1].name;
+                    selected_map.scene_name = maps[maps.Count - 1].scene_name;
+                    selected_map.max_laps = maps[maps.Count - 1].max_laps;
+                    selected_map.max_opponents = maps[maps.Count - 1].max_opponents;
+                    //selected_map.map_image = maps[maps.Count - 1].map_image;
+                    selected_map.map_image = (maps[maps.Count - 1].map_image);
+
                 }
-                PlayerPrefs.SetString("map", map);
+                race.map = selected_map;
                 _mapText.text = map;
-                foreach (Map m in maps)
+
+                if (selected_map.max_laps < lap)
                 {
-                    if (m.mapname == map)
-                    {
-                        _mapImage.sprite = m.picture;
-                        selected_map = m;
-                    }
-                }
-                if (selected_map.maxLaps < lap)
-                {
-                    lap = selected_map.maxLaps;
+                    lap = selected_map.max_laps;
                     _lapText.text = "" + lap;
+                    race.lap = lap;
                 }
-                if (selected_map.maxOpponents < opp)
+                if (selected_map.max_opponents < opp)
                 {
-                    opp = selected_map.maxLaps;
+                    opp = selected_map.max_opponents;
                     _opponentText.text = "" + opp;
+                    race.opponent = opp;
                 }
+
+                SaveGame.Save<RaceSaver>("current_race", race);
                 break;
             }
         }
@@ -207,43 +285,56 @@ public class SingleMapSelection : Menu
     {
         for (int i = 0; i < maps.Count; i++) 
         {
-            if (maps[i].mapname == map) 
+            if (maps[i].scene_name == selected_map.scene_name) 
             {
                 if (i != (maps.Count - 1))
                 {
                     Debug.Log("IFNEXT");
-                    map = maps[i + 1].mapname;
-                    _mapImage.sprite = maps[i + 1].picture;
-                    selected_map = maps[i + 1];
+                    map = maps[i + 1].name;
+                    _mapImage.sprite = maps[i + 1].map_image;
+
+                    selected_map.name = maps[i + 1].name;
+                    selected_map.scene_name = maps[i + 1].scene_name;
+                    selected_map.max_laps = maps[i + 1].max_laps;
+                    selected_map.max_opponents = maps[i + 1].max_opponents;
+                    //selected_map.map_image = maps[i + 1].map_image;
+
+                    selected_map.map_image = (maps[i + 1].map_image);
+
                 }
 
                 else
                 {
                     Debug.Log("ELSENEXT");
-                    _mapImage.sprite = maps[0].picture;
-                    map = maps[0].mapname;
-                    selected_map = maps[0];
+                    _mapImage.sprite = maps[0].map_image;
+                    map = maps[0].name;
+
+                    selected_map.name = maps[0].name;
+                    selected_map.scene_name = maps[0].scene_name;
+                    selected_map.max_laps = maps[0].max_laps;
+                    selected_map.max_opponents = maps[0].max_opponents;
+                    //selected_map.map_image = maps[0].map_image;
+                    selected_map.map_image = (maps[0].map_image);
+
+
                 }
-                PlayerPrefs.SetString("map", map);
+                race.map = selected_map;
                 _mapText.text = map;
-                foreach (Map m in maps)
+
+                if (selected_map.max_laps < lap)
                 {
-                    if (m.mapname == map)
-                    {
-                        _mapImage.sprite = m.picture;
-                        selected_map = m;
-                    }
-                }
-                if (selected_map.maxLaps < lap)
-                {
-                    lap = selected_map.maxLaps;
+                    lap = selected_map.max_laps;
                     _lapText.text = "" + lap;
+                    race.lap = lap;
                 }
-                if (selected_map.maxOpponents < opp)
+                if (selected_map.max_opponents < opp)
                 {
-                    opp = selected_map.maxLaps;
+                    opp = selected_map.max_opponents;
                     _opponentText.text = "" + opp;
+                    race.opponent = opp;
                 }
+
+                SaveGame.Save<RaceSaver>("current_race", race);
                 break;
             }
         }
@@ -251,36 +342,22 @@ public class SingleMapSelection : Menu
 
     public void HandleFreeRoamButtonPressed()
     {
-        PlayerPrefs.SetString("race", "no");
+        race.is_race = false;
+        SaveGame.Save<RaceSaver>("current_race", race);
         LoadLevel();
     }
 
     public void HandleRaceButtonPressed()
     {
-        PlayerPrefs.SetString("race", "yes");
+        race.is_race = false;
+        SaveGame.Save<RaceSaver>("current_race", race);
         LoadLevel();
     }
 
     private void LoadLevel()
     {
-        PlayerPrefs.SetString("editable", "yes");
-        if (map == "Backyard") 
-        {
-            Debug.Log("Backyard");
-            _sceneLoader.LoadScene("track1");
-            
-        }
-        else if(map == "SouthPark")
-        {
-            Debug.Log("SouthPark");
-            _sceneLoader.LoadScene("South_Pacific_Town");
-            /*StartCoroutine(LevelLoaderAsync(("South_Pacific_Town"),() =>
-            {
-                _menuManager.CloseMenu();
-                _menuManager.SwitchMenu(MenuType.Main);
-            }));*/
-            
-        }
+            Debug.Log(selected_map.map_scene.name);
+            _sceneLoader.LoadScene(selected_map.map_scene.name);
     }
 
     public void HandlePreviousOrderButtonPressed()
@@ -305,6 +382,7 @@ public class SingleMapSelection : Menu
 
     public void HandlePreviousTypeButtonPressed()
     {
+        RaceData.RaceType selected_type = race.type;
         for (int i = 0; i < types.Count; i++)
         {
             if (types[i] == type)
@@ -318,21 +396,45 @@ public class SingleMapSelection : Menu
                 {
                     type = types[types.Count-1];
                 }
-                PlayerPrefs.SetString("type", type);
+
+                switch (type) 
+                {
+                    case "Elim":
+                        selected_type = RaceData.RaceType.Elimination;
+                        break;
+                    case "Time":
+                        selected_type = RaceData.RaceType.TimeTrail;
+                        break;
+                    case "Race":
+                        selected_type = RaceData.RaceType.Race;
+                        break;
+                    default:
+                        selected_type = RaceData.RaceType.Race;
+                        break;
+                }
+                race.type = selected_type;
                 _typeText.text = type;
+
                 if (type == "Time")
                 {
                     temp = opp;
                     opp = 0;
-                    PlayerPrefs.SetInt("opponent", opp);
+                    race.opponent = opp;
                     _opponentText.text = "0";
+
+                    _nextOppButton.interactable = false;
+                    _previousOppButton.interactable = false;
                 }
                 else if (opp == 0) 
                 {
                     opp = temp;
-                    PlayerPrefs.SetInt("opponent", opp);
+                    race.opponent = opp;
                     _opponentText.text = ""+opp;
+
+                    _nextOppButton.interactable = true;
+                    _previousOppButton.interactable = true;
                 }
+                SaveGame.Save<RaceSaver>("current_race", race);
                 break;
             }
         }
@@ -340,6 +442,7 @@ public class SingleMapSelection : Menu
 
     public void HandleNextTypeButtonPressed()
     {
+        RaceData.RaceType selected_type = race.type;
         for (int i = 0; i < types.Count; i++)
         {
             if (types[i] == type)
@@ -353,21 +456,43 @@ public class SingleMapSelection : Menu
                 {
                     type = types[0];
                 }
-                PlayerPrefs.SetString("type", type);
+                switch (type)
+                {
+                    case "Elim":
+                        selected_type = RaceData.RaceType.Elimination;
+                        break;
+                    case "Time":
+                        selected_type = RaceData.RaceType.TimeTrail;
+                        break;
+                    case "Race":
+                        selected_type = RaceData.RaceType.Race;
+                        break;
+                    default:
+                        selected_type = RaceData.RaceType.Race;
+                        break;
+                }
+                race.type = selected_type;
                 _typeText.text = type;
                 if (type == "Time")
                 {
                     temp = opp;
                     opp = 0;
-                    PlayerPrefs.SetInt("opponent", opp);
+                    race.opponent = opp;
                     _opponentText.text = "0";
+
+                    _nextOppButton.interactable = false;
+                    _previousOppButton.interactable = false;
                 }
                 else if (opp == 0)
                 {
                     opp = temp;
-                    PlayerPrefs.SetInt("opponent", opp);
+                    race.opponent = opp;
                     _opponentText.text = "" + opp;
+
+                    _nextOppButton.interactable = true;
+                    _previousOppButton.interactable = true;
                 }
+                SaveGame.Save<RaceSaver>("current_race", race);
                 break;
             }
         }
@@ -375,20 +500,22 @@ public class SingleMapSelection : Menu
 
     public void HandlePreviousOppButtonPressed()
     {
-        if (opp > 1 && type!="Time") 
+        if (opp > 1) 
         {
             opp--;
-            PlayerPrefs.SetInt("opponent", opp);
+            race.opponent = opp;
+            SaveGame.Save<RaceSaver>("current_race", race);
             _opponentText.text = "" + opp;
         }
     }
 
     public void HandleNextOppButtonPressed()
     {
-        if (opp < selected_map.maxOpponents && type != "Time")
+        if (opp < selected_map.max_opponents)
         {
             opp++;
-            PlayerPrefs.SetInt("opponent", opp);
+            race.opponent = opp;
+            SaveGame.Save<RaceSaver>("current_race", race);
             _opponentText.text = "" + opp;
         }
     }
@@ -398,7 +525,8 @@ public class SingleMapSelection : Menu
         if (lap > 1)
         {
             lap--;
-            PlayerPrefs.SetInt("lap", lap);
+            race.lap = lap;
+            SaveGame.Save<RaceSaver>("current_race", race);
             _lapText.text = "" + lap;
         }
     }
@@ -406,10 +534,11 @@ public class SingleMapSelection : Menu
     public void HandleNextLapButtonPressed()
     {
         if (type == "Elim" && opp == lap) { }
-        else if (lap < selected_map.maxLaps) 
+        else if (lap < selected_map.max_laps) 
         {
             lap++;
-            PlayerPrefs.SetInt("lap", lap);
+            race.lap = lap;
+            SaveGame.Save<RaceSaver>("current_race", race);
             _lapText.text = "" + lap;
         }
     }
@@ -422,6 +551,8 @@ public class SingleMapSelection : Menu
 
     public void HandleBackButtonPressed()
     {
+
+        SaveGame.Delete("current_tournament");
         _menuManager.SwitchMenu(MenuType.Singleplayer);
         /*_menuManager.CloseMenu();
         _menuManager.SwitchMenu(MenuType.Level);
