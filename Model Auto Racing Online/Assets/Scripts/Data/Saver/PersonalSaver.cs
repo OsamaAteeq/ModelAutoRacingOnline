@@ -2,6 +2,7 @@
 using UnityEngine;
 namespace Data
 {
+    [System.Serializable]
     public class PersonalSaver
     {
         public string id;
