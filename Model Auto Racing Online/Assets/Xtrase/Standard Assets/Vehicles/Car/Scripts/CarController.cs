@@ -39,8 +39,12 @@ namespace UnityStandardAssets.Vehicles.Car
 
         //My Edits end
         [SerializeField] private CarDriveType m_CarDriveType = CarDriveType.FourWheelDrive;
-        [SerializeField] private WheelCollider[] m_WheelColliders = new WheelCollider[4];
-        [SerializeField] private GameObject[] m_WheelMeshes = new GameObject[4];
+
+        //Made publics for car modifier to access
+        [SerializeField] public WheelCollider[] m_WheelColliders = new WheelCollider[4];
+        [SerializeField] public GameObject[] m_WheelMeshes = new GameObject[4];
+        // Till here
+
         [SerializeField] private WheelEffects[] m_WheelEffects = new WheelEffects[4];
         [SerializeField] private Vector3 m_CentreOfMassOffset;
         [SerializeField] private float m_MaximumSteerAngle;
