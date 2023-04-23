@@ -14,8 +14,8 @@ public class carModifier : MonoBehaviour
     private WheelCollider[] old_WheelColliders = new WheelCollider[4];
     private GameObject[] old_WheelMeshes = new GameObject[4];
 
-    private WheelCollider[] new_WheelColliders = new WheelCollider[4];
-    private GameObject[] new_WheelMeshes = new GameObject[4];
+    [SerializeField]
+    private Suspension[] suspensions = new Suspension[4];
 
     private CarController cc;
 
@@ -28,39 +28,57 @@ public class carModifier : MonoBehaviour
 
     public void changeWheels(int i) 
     {
-        int count = 0;
         Data.Wheel toAttach = all_wheels.wheels[i];
-        foreach (GameObject old in old_WheelMeshes) 
+        int length = old_WheelMeshes.Length;
+        for (int j = 0; j < length; j++)
         {
-            
-            Transform t = old.transform;
-            GameObject newWheel;
-            if (count == 0)
-                newWheel = Instantiate(toAttach.front_right_wheel, t.parent.transform);
-            else if (count == 1)
-                newWheel = Instantiate(toAttach.front_left_wheel, t.parent.transform);
-            else if (count == 2)
-                newWheel = Instantiate(toAttach.rear_right_wheel, t.parent.transform);
-            else if (count == 3)
-                newWheel = Instantiate(toAttach.rear_left_wheel, t.parent.transform);
+            WheelCollider temp_collider = old_WheelColliders[j];
+            GameObject temp_wheel = old_WheelMeshes[j];
+            float old_distance = old_WheelColliders[j].radius + old_WheelColliders[j].suspensionDistance;
+            Transform t = old_WheelMeshes[j].transform;
+
+            if (j == 0)
+                old_WheelMeshes[j] = Instantiate(toAttach.front_right_wheel, t.parent.transform);
+            else if (j == 1)
+                old_WheelMeshes[j] = Instantiate(toAttach.front_left_wheel, t.parent.transform);
+            else if (j == 2)
+                old_WheelMeshes[j] = Instantiate(toAttach.rear_right_wheel, t.parent.transform);
+            else if (j == 3)
+                old_WheelMeshes[j] = Instantiate(toAttach.rear_left_wheel, t.parent.transform);
             else
             {
-                newWheel = null;
+                old_WheelMeshes[j] = null;
                 Debug.LogError("Wheel Out of Bound");
             }
 
-            newWheel.transform.position = t.position;
-            newWheel.transform.rotation = t.rotation;
-            old.SetActive(false);
+            old_WheelMeshes[j].transform.position = t.position;
+            old_WheelMeshes[j].transform.rotation = t.rotation;
+            //Destroy(old);
+            //old.SetActive(false);
 
-            WheelCollider newCollider = newWheel.GetComponentInChildren<WheelCollider>();
-            newCollider.transform.SetParent(old_WheelColliders[count].transform.parent);
-            old_WheelColliders[count].gameObject.SetActive(false);
+            old_WheelColliders[j] = old_WheelMeshes[j].GetComponentInChildren<WheelCollider>();
 
-            new_WheelMeshes[count] = newWheel;
-            new_WheelColliders[count] = newCollider;
 
-            count++;
+            float new_distance = old_WheelColliders[j].radius + old_WheelColliders[j].suspensionDistance;
+            float diffrence = new_distance - old_distance;
+            Debug.Log("Diffrence : " + diffrence);
+            old_WheelColliders[j].transform.position = new Vector3(old_WheelColliders[j].transform.position.x, old_WheelColliders[j].transform.position.y - diffrence, old_WheelColliders[j].transform.position.z);
+            old_WheelColliders[j].transform.position = new Vector3(old_WheelColliders[j].transform.position.x, old_WheelColliders[j].transform.position.y + diffrence, old_WheelColliders[j].transform.position.z);
+
+            old_WheelColliders[j].transform.SetParent(temp_collider.transform.parent);
+
+            if (suspensions[j]!=null)
+            {
+                suspensions[j].wheel = old_WheelMeshes[j];
+                suspensions[j].check();
+            }
+
+            //Destroy(old_WheelColliders[j].gameObject);
+            //old_WheelColliders[j].gameObject.SetActive(false);
+
+            Destroy(temp_collider.gameObject);
+            Destroy(temp_wheel);
+
         }
     }
 }

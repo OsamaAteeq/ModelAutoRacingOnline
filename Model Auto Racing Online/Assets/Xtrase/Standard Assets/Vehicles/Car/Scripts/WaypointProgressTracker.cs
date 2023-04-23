@@ -138,7 +138,8 @@ namespace UnityStandardAssets.Utility
 
 
         private void OnDrawGizmos()
-        {
+        {//outer if condition is an edit
+            if(isActiveAndEnabled)
             if (Application.isPlaying)
             {
                 Gizmos.color = Color.green;

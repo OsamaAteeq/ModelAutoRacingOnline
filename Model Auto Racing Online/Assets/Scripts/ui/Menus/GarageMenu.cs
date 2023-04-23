@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using Data;
 using BayatGames.SaveGameFree;
+using System.Collections.Generic;
 
 public class GarageMenu : Menu
 {
@@ -25,6 +26,8 @@ public class GarageMenu : Menu
     private string money;
     private VehicleSaver current_vehicle;
     private VehicleListSaver moded_vehicleList;
+
+    private Dictionary<int, GameObject> spawned_vehicles = new Dictionary<int, GameObject>();
     override
     public void SetEnable(int value)
     {
@@ -94,38 +97,56 @@ public class GarageMenu : Menu
 
     public void HandleNextButtonPressed()
     {
-         
-        Transform t = _originalCar.transform.parent.transform;
-        Transform t1 = _originalCar.transform;
         _originalCar.SetActive(false);
-        VehicleSaver carToSpawn;
-        if (current_vehicle.carIndex +1 < carlist.cars.Count)
+        if (current_vehicle.carIndex + 1 < carlist.cars.Count && spawned_vehicles.ContainsKey(current_vehicle.carIndex + 1))
         {
-            carToSpawn = moded_vehicleList.moded_vehicles[current_vehicle.carIndex + 1];
-            _originalCar = Instantiate(carlist.cars[carToSpawn.carIndex].car, t);
-            current_vehicle.carIndex += 1;
+            _originalCar = spawned_vehicles.GetValueOrDefault(current_vehicle.carIndex + 1);
+            _originalCar.SetActive(true);
+            current_vehicle = moded_vehicleList.moded_vehicles[current_vehicle.carIndex + 1];
+            Debug.Log("1");
         }
-        else 
-        {
-            carToSpawn = moded_vehicleList.moded_vehicles[0];
-            _originalCar = Instantiate(carlist.cars[carToSpawn.carIndex].car, t);
-            current_vehicle.carIndex = 0;
-        }
-        SaveGame.Save<VehicleSaver>("current_vehicle",current_vehicle);
-        _originalCar.transform.position = t1.position;
-        _originalCar.transform.rotation = t1.rotation;
 
-        MonoBehaviour[] comps = _originalCar.GetComponents<MonoBehaviour>();
-        foreach (MonoBehaviour c in comps)
+        else if (spawned_vehicles.ContainsKey(0))
         {
-            if (c.GetType() == typeof(carModifier)) 
+            _originalCar = spawned_vehicles.GetValueOrDefault(0);
+            _originalCar.SetActive(true);
+            current_vehicle = moded_vehicleList.moded_vehicles[0];
+            Debug.Log("2");
+        }
+        else
+        {
+
+            Transform t = _originalCar.transform.parent.transform;
+            Transform t1 = _originalCar.transform;
+            VehicleSaver carToSpawn;
+            if (current_vehicle.carIndex + 1 < carlist.cars.Count)
             {
-                carModifier a = (carModifier)c;
-                a.changeWheels(carToSpawn.wheelsIndex);
+                carToSpawn = moded_vehicleList.moded_vehicles[current_vehicle.carIndex + 1];
+                _originalCar = Instantiate(carlist.cars[carToSpawn.carIndex].car, t);
+                current_vehicle.carIndex += 1;
             }
-            c.enabled = false;
-        }
+            else
+            {
+                carToSpawn = moded_vehicleList.moded_vehicles[0];
+                _originalCar = Instantiate(carlist.cars[carToSpawn.carIndex].car, t);
+                current_vehicle.carIndex = 0;
+            }
+            _originalCar.transform.position = t1.position;
+            _originalCar.transform.rotation = t1.rotation;
 
+            MonoBehaviour[] comps = _originalCar.GetComponents<MonoBehaviour>();
+            foreach (MonoBehaviour c in comps)
+            {
+                if (c.GetType() == typeof(carModifier))
+                {
+                    carModifier a = (carModifier)c;
+                    a.changeWheels(carToSpawn.wheelsIndex);
+                }
+                c.enabled = false;
+            }
+            spawned_vehicles.Add(current_vehicle.carIndex, _originalCar);
+        }
+        SaveGame.Save<VehicleSaver>("current_vehicle", current_vehicle);
     }
     public void HandleStoreButtonPressed()
     {
