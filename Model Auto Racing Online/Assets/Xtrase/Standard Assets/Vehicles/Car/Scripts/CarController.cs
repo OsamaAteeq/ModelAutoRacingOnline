@@ -43,9 +43,10 @@ namespace UnityStandardAssets.Vehicles.Car
         //Made publics for car modifier to access
         [SerializeField] public WheelCollider[] m_WheelColliders = new WheelCollider[4];
         [SerializeField] public GameObject[] m_WheelMeshes = new GameObject[4];
+        [SerializeField] public WheelEffects[] m_WheelEffects = new WheelEffects[4];
         // Till here
 
-        [SerializeField] private WheelEffects[] m_WheelEffects = new WheelEffects[4];
+
         [SerializeField] private Vector3 m_CentreOfMassOffset;
         [SerializeField] private float m_MaximumSteerAngle;
         [Range(0, 1)] [SerializeField] private float m_SteerHelper; // 0 is raw physics , 1 the car will grip in the direction it is facing
@@ -82,11 +83,16 @@ namespace UnityStandardAssets.Vehicles.Car
         // Use this for initialization
         private void Start()
         {
+            startFunction();
+        }
+        public void startFunction() 
+        {
+
             //myEdit start
             tim = transform.root.GetComponentInChildren<RaceManager>();
             startpos = transform.position;
             startrot = transform.rotation;
-            
+
             //my Edit end
 
             m_WheelMeshLocalRotations = new Quaternion[4];
@@ -99,9 +105,8 @@ namespace UnityStandardAssets.Vehicles.Car
             m_MaxHandbrakeTorque = float.MaxValue;
 
             m_Rigidbody = GetComponent<Rigidbody>();
-            m_CurrentTorque = m_FullTorqueOverAllWheels - (m_TractionControl*m_FullTorqueOverAllWheels);
+            m_CurrentTorque = m_FullTorqueOverAllWheels - (m_TractionControl * m_FullTorqueOverAllWheels);
         }
-
         //my functions
         public void resetIt()
         {
