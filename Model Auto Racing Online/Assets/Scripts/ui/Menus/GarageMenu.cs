@@ -28,9 +28,12 @@ public class GarageMenu : Menu
     private VehicleListSaver moded_vehicleList;
 
     private Dictionary<int, GameObject> spawned_vehicles = new Dictionary<int, GameObject>();
+
+
     override
     public void SetEnable(int value)
     {
+        SaveGame.Clear();
         base.SetEnable(value);
         PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
         PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
@@ -38,7 +41,7 @@ public class GarageMenu : Menu
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
 
         VehicleSaver default_vehicle = new VehicleSaver();
-        default_vehicle.carIndex = 0; default_vehicle.wheelsIndex = 0;
+        default_vehicle.carIndex = default_vehicle.wheelsIndex = default_vehicle.motorsIndex = default_vehicle.spoilersIndex = default_vehicle.colorsIndex = default_vehicle.suspensionsIndex = 0;
         current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle",default_vehicle);
         if (!SaveGame.Exists("vehicle_list"))
         {
@@ -47,7 +50,7 @@ public class GarageMenu : Menu
             foreach (Car c in carlist.cars)
             {
                 VehicleSaver vs = new VehicleSaver();
-                vs.carIndex = count; vs.wheelsIndex = 0;
+                vs.carIndex = count; vs.wheelsIndex = vs.motorsIndex = vs.spoilersIndex = vs.colorsIndex = vs.suspensionsIndex = 0;
                 count++;
                 default_vehicle_list.moded_vehicles.Add(vs);
             }
@@ -58,8 +61,9 @@ public class GarageMenu : Menu
         {
             moded_vehicleList = SaveGame.Load<VehicleListSaver>("vehicle_list");
         }
-        default_vehicle.carIndex = 0; default_vehicle.wheelsIndex = 0;
+        default_vehicle.carIndex = 0; default_vehicle.wheelsIndex = default_vehicle.motorsIndex = default_vehicle.spoilersIndex = default_vehicle.colorsIndex = default_vehicle.suspensionsIndex = 0;
         current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle", default_vehicle);
+        SpawnVehicle(current_vehicle.carIndex,true);
     }
 
     public void HandleBackButtonPressed()
@@ -94,43 +98,34 @@ public class GarageMenu : Menu
         */
     }
 
-
-    public void HandleNextButtonPressed()
+    public void SpawnVehicle(int i, bool shouldDestroy = false) 
     {
-        _originalCar.SetActive(false);
-        if (current_vehicle.carIndex + 1 < carlist.cars.Count && spawned_vehicles.ContainsKey(current_vehicle.carIndex + 1))
+        if (shouldDestroy)
         {
-            _originalCar = spawned_vehicles.GetValueOrDefault(current_vehicle.carIndex + 1);
-            _originalCar.SetActive(true);
-            current_vehicle = moded_vehicleList.moded_vehicles[current_vehicle.carIndex + 1];
-            Debug.Log("1");
-        }
-
-        else if (spawned_vehicles.ContainsKey(0))
-        {
-            _originalCar = spawned_vehicles.GetValueOrDefault(0);
-            _originalCar.SetActive(true);
-            current_vehicle = moded_vehicleList.moded_vehicles[0];
-            Debug.Log("2");
+            if (spawned_vehicles.ContainsKey(i)) 
+            {
+                spawned_vehicles.Remove(i);
+            }
+                Destroy(_originalCar); 
         }
         else
-        {
+            _originalCar.SetActive(false);
 
+        if (spawned_vehicles.ContainsKey(i))
+        {
+            _originalCar = spawned_vehicles.GetValueOrDefault(i);
+            _originalCar.SetActive(true);
+            current_vehicle = moded_vehicleList.moded_vehicles[i];
+        }
+        else 
+        {
             Transform t = _originalCar.transform.parent.transform;
             Transform t1 = _originalCar.transform;
             VehicleSaver carToSpawn;
-            if (current_vehicle.carIndex + 1 < carlist.cars.Count)
-            {
-                carToSpawn = moded_vehicleList.moded_vehicles[current_vehicle.carIndex + 1];
-                _originalCar = Instantiate(carlist.cars[carToSpawn.carIndex].car, t);
-                current_vehicle.carIndex += 1;
-            }
-            else
-            {
-                carToSpawn = moded_vehicleList.moded_vehicles[0];
-                _originalCar = Instantiate(carlist.cars[carToSpawn.carIndex].car, t);
-                current_vehicle.carIndex = 0;
-            }
+            carToSpawn = moded_vehicleList.moded_vehicles[i];
+            _originalCar = Instantiate(carlist.cars[carToSpawn.carIndex].car, t);
+            current_vehicle.carIndex = i;
+
             _originalCar.transform.position = t1.position;
             _originalCar.transform.rotation = t1.rotation;
 
@@ -141,20 +136,51 @@ public class GarageMenu : Menu
                 {
                     carModifier a = (carModifier)c;
                     a.changeWheels(carToSpawn.wheelsIndex);
+                    a.changeColor(carToSpawn.colorsIndex);
                 }
                 c.enabled = false;
             }
             spawned_vehicles.Add(current_vehicle.carIndex, _originalCar);
         }
+
         SaveGame.Save<VehicleSaver>("current_vehicle", current_vehicle);
     }
+
+    public void HandleNextButtonPressed()
+    {
+        if (current_vehicle.carIndex + 1 < carlist.cars.Count)
+        {
+            Debug.Log("Index : "+ (current_vehicle.carIndex + 1));
+
+            SpawnVehicle(current_vehicle.carIndex + 1);
+        }
+
+        else
+        {
+            Debug.Log("Index : " + 0);
+
+            SpawnVehicle(0);
+        }
+    }
+
     public void HandleStoreButtonPressed()
     {
         Debug.Log("NOT IMPLEMENTED YET");
     }
     public void HandlePreviousButtonPressed()
     {
-        Debug.Log("NOT IMPLEMENTED YET");
+        if (current_vehicle.carIndex - 1 >= 0)
+        {
+
+            Debug.Log("Index : " + (current_vehicle.carIndex - 1));
+            SpawnVehicle(current_vehicle.carIndex - 1);
+        }
+
+        else
+        {
+            Debug.Log("Index : " + (carlist.cars.Count - 1));
+            SpawnVehicle(carlist.cars.Count-1);
+        }
     }
     public void HandleSelectButtonPressed()
     {
