@@ -44,6 +44,9 @@ EditorUserSettings:
     UnityRemoteCompression:
       value: 29617121
       flags: 0
+    UnityRemoteDevice:
+      value: 225f4d46245b0d4902070862342649191512
+      flags: 0
     vcSharedLogLevel:
       value: 0a5f5209
       flags: 0

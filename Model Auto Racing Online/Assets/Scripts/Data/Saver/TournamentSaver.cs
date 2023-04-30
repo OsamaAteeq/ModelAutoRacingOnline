@@ -4,7 +4,7 @@ namespace Data
 {
     public class TournamentSaver : ItemSaver
     {
-
+        public string name;
         public Sprite buttonPic;
         public List<RaceSaver> races = new List<RaceSaver>();
         

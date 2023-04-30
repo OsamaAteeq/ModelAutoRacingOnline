@@ -1,9 +1,15 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Rotate : MonoBehaviour
 {
+    private Touch touch;
+
+    [Header("Touch Rotation")]
+    [SerializeField]
+    public bool isTouchRotatable = false;
+    [SerializeField]
+    private float rotationSpeedModifier = 0.1f;
+
     [Header("Direction")]
     [SerializeField]
     private bool x_axis = false;
@@ -30,21 +36,46 @@ public class Rotate : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Vector3 rotation = target.rotation.eulerAngles;
-        if (x_axis)
+        if (!isTouchRotatable)
         {
-            rotation.x += x_force*Time.deltaTime;
-            target.rotation = Quaternion.Euler(rotation);
+            Vector3 rotation = target.rotation.eulerAngles;
+            if (x_axis)
+            {
+                rotation.x += x_force * Time.deltaTime;
+                target.rotation = Quaternion.Euler(rotation);
+            }
+            if (y_axis)
+            {
+                rotation.y += y_force * Time.deltaTime;
+                target.rotation = Quaternion.Euler(rotation);
+            }
+            if (z_axis)
+            {
+                rotation.z += z_force * Time.deltaTime;
+                target.rotation = Quaternion.Euler(rotation);
+            }
         }
-        if (y_axis)
+        else 
         {
-            rotation.y += y_force * Time.deltaTime;
-            target.rotation = Quaternion.Euler(rotation);
-        }
-        if (z_axis)
-        {
-            rotation.z += z_force * Time.deltaTime;
-            target.rotation = Quaternion.Euler(rotation);
+            
+            if (Input.touchCount > 0) 
+            {
+                touch = Input.GetTouch(0);
+                if (touch.phase == TouchPhase.Moved) 
+                {
+                    Vector3 rotation = target.rotation.eulerAngles;
+                    if (x_axis)
+                    {
+                        rotation.x -= touch.deltaPosition.y*rotationSpeedModifier * Time.deltaTime;
+                        target.rotation = Quaternion.Euler(rotation);
+                    }
+                    if (y_axis)
+                    {
+                        rotation.y -= touch.deltaPosition.x * rotationSpeedModifier * Time.deltaTime;
+                        target.rotation = Quaternion.Euler(rotation);
+                    }
+                }
+            }
         }
     }
 }

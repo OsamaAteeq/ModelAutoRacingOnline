@@ -29,7 +29,6 @@ namespace Data
         public float income_factor;
         public int cost;
         public Sprite buttonPic;
-        public Texture2D buttonPic2;
         private bool is_tournament = false;
 
         [System.Serializable]

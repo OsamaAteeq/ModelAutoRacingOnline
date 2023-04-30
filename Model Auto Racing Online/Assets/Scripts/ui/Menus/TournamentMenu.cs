@@ -21,6 +21,9 @@ public class TournamentMenu : Menu
     [Header("Button Prefab :")]
     [SerializeField] private Button _raceButton;
 
+    [Header("Scriptable Objects :")]
+    [SerializeField] private TournamentsList _tournamentsList;
+
     private int intmoney;
     private string money;
     private bool tournament_bought = false;
@@ -29,6 +32,8 @@ public class TournamentMenu : Menu
     private InventorySaver inventory;
     private Button[] buttons;
     private PersonalSaver player;
+
+    private int count = 0;
     private void Start()
     {
         
@@ -52,13 +57,35 @@ public class TournamentMenu : Menu
         {
             inventory = new InventorySaver();
         }
-        int count = 0;
+
+        Debug.Log("COUNT : " + count);
+        if(buttons != null)
+        Debug.Log("Length : " + buttons.Length);
+
+        for (int i = 0; i < count; i++) 
+        {
+            Debug.Log(buttons[i].name);
+            DestroyImmediate(buttons[i].gameObject);
+        }
+        buttons = null;
+        count = 0;
+        foreach (TournamentData td in _tournamentsList.tournaments) 
+        {
+            if (td.name == tournament.name && td.races.Count == tournament.races.Count) 
+            {
+                int rcount = td.races.Count;
+                for (int fk = 0; fk < rcount; fk++) 
+                {
+                    tournament.races[fk].buttonPic = td.races[fk].buttonPic;
+                }
+            }
+        }
         foreach (RaceSaver rd in tournament.races)
         {
             count++;
             GameObject _btn = Instantiate<GameObject>(_raceButton.gameObject, _container.transform);
             TextMeshProUGUI[] tmps = _btn.GetComponentsInChildren<TextMeshProUGUI>();
-            
+
             Debug.Log(rd.buttonPic);
             _btn.GetComponent<Image>().sprite = rd.buttonPic;
            
@@ -187,6 +214,7 @@ public class TournamentMenu : Menu
 
     public void HandleRaceButtonPressed(RaceSaver race)
     {
+
         intmoney -= race.cost;
         player.cash = intmoney;
         SaveGame.Save<PersonalSaver>("player", player);
@@ -194,8 +222,8 @@ public class TournamentMenu : Menu
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
 
         SaveGame.Save<RaceSaver>("current_race", race);
-
         _menuManager.SwitchMenu(MenuType.SingleplayerMaps);
+
     }
     
     public void HandleStoreButtonPressed()

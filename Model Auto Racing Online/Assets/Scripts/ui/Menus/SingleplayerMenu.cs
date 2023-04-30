@@ -19,7 +19,9 @@ public class SingleplayerMenu : Menu
     [SerializeField] private GridLayoutGroup _container;
 
     [Header("Scriptable Objects :")]
-    [SerializeField] private List<TournamentData> _tournaments = new List<TournamentData>();
+    [SerializeField]
+    private TournamentsList _tournamentsList;
+    private List<TournamentData> _tournaments;
 
     [Header("Button Prefab :")]
     [SerializeField] private Button _tournamentButton;
@@ -28,6 +30,7 @@ public class SingleplayerMenu : Menu
 
     public void Start()
     {
+        _tournaments = _tournamentsList.tournaments;
         foreach (TournamentData td in _tournaments) 
         {
             GameObject _btn = Instantiate<GameObject>(_tournamentButton.gameObject, _container.transform);
@@ -109,6 +112,7 @@ public class SingleplayerMenu : Menu
     public void HandleTournamentButtonPressed(TournamentData td)
     {
         TournamentSaver saver = new TournamentSaver();
+        saver.name = td.name;
         saver.cost = td.cost;
         saver.buttonPic = td.buttonPic;
         foreach (RaceData rd in td.races) 

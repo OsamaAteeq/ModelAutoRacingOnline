@@ -6,6 +6,8 @@ namespace Data
     public class Spoiler : Item
     {
         public GameObject spoiler;
+        public bool isPainted;
+        public Material paintedMaterial;
     }
 }
 

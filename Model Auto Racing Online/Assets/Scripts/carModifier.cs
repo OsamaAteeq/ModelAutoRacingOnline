@@ -17,11 +17,12 @@ public class carModifier : MonoBehaviour
     [SerializeField] private Material mainMaterial;
     [SerializeField] private Material darkerMaterial;
     [SerializeField] private float darkFactor = 4;
-    [SerializeField] private float lightFactor = 2;
     [SerializeField] private Material lighterMaterial;
+    [SerializeField] private float lightFactor = 2;
 
     [Header("Spoilers :")]
     [SerializeField] public bool _supportsSpoilers;
+    [SerializeField] private GameObject _attachedSpoiler;
     [SerializeField] private SpoilersList allSupportedSpoilers;
     [Header("Motors :")]
     [SerializeField] public bool _supportsMotors;
@@ -120,7 +121,66 @@ public class carModifier : MonoBehaviour
     {
         if (_supportsSpoilers)
         {
-            
+            Debug.Log("SPOILER : " + i);
+            Transform t = _attachedSpoiler.transform;
+
+            Spoiler toAttach = allSupportedSpoilers.spoilers[i];
+            BoxCollider[] old_colliders = _attachedSpoiler.GetComponentsInChildren<BoxCollider>();
+            BoxCollider[] new_colliders = toAttach.spoiler.GetComponentsInChildren<BoxCollider>();
+            float addToNew = 0;
+            if (old_colliders.Length != 0) 
+            {
+                float max = old_colliders[0].size.y;
+                if (old_colliders.Length > 1) 
+                {
+                    for (int j = 1; j < old_colliders.Length; j++) 
+                    {
+                        if (old_colliders[j].size.y > max) 
+                        {
+                            max = old_colliders[j].size.y;
+                        }
+                    }
+                }
+                addToNew -= max / 2;
+            }
+            if (new_colliders.Length != 0)
+            {
+                float max = new_colliders[0].size.y;
+                if (new_colliders.Length > 1)
+                {
+                    for (int j = 1; j < new_colliders.Length; j++)
+                    {
+                        if (new_colliders[j].size.y > max)
+                        {
+                            max = new_colliders[j].size.y;
+                        }
+                    }
+                }
+                addToNew += max / 2;
+            }
+            GameObject temp = _attachedSpoiler;
+            Destroy(temp);
+            _attachedSpoiler = Instantiate(toAttach.spoiler, t.parent.transform);
+            if (toAttach.isPainted)
+            {
+                Material newMaterial = new Material(toAttach.paintedMaterial);
+                newMaterial.color = mainMaterial.color;
+                Renderer[] rs = _attachedSpoiler.GetComponentsInChildren<Renderer>();
+                foreach (Renderer r in rs)
+                {
+                    Material[] ms = r.sharedMaterials;
+                    int length = ms.Length;
+                    for (int iter = 0; iter < length; iter++)
+                    {
+                        if (ms[iter] == toAttach.paintedMaterial)
+                        {
+                            ms[iter] = newMaterial;
+                        }
+                    }
+                }
+            }
+            _attachedSpoiler.transform.position = new Vector3(t.position.x, t.position.y + addToNew, t.position.z);
+            _attachedSpoiler.transform.rotation = t.rotation;
         }
         else 
         {

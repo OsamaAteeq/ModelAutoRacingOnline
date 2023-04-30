@@ -8,6 +8,7 @@ namespace Data
     public class MapData : ScriptableObject
     {
         public new string name;
+        public SurfaceTypes surface;
         public int max_opponents;
         public int max_laps;
         public Sprite map_image;

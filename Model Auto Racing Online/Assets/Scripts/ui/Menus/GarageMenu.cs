@@ -7,10 +7,19 @@ using TMPro;
 using Data;
 using BayatGames.SaveGameFree;
 using System.Collections.Generic;
+using UnityStandardAssets.Vehicles.Car;
 
 public class GarageMenu : Menu
 {
-    [Header("Inherit References :")]
+    [Header("Inherit Label References :")]
+    [SerializeField] private TextMeshProUGUI _nameLabel;
+
+    [SerializeField] private TextMeshProUGUI _weightLabel;
+    [SerializeField] private TextMeshProUGUI _surfaceLabel;
+    [SerializeField] private TextMeshProUGUI _topspeedLabel;
+    [SerializeField] private TextMeshProUGUI _scaleLabel;
+
+    [Header("Inherit Button References :")]
     [SerializeField] private Button _backButton;
     [SerializeField] private Button _storeButton;
 
@@ -28,21 +37,19 @@ public class GarageMenu : Menu
     private VehicleListSaver moded_vehicleList;
 
     private Dictionary<int, GameObject> spawned_vehicles = new Dictionary<int, GameObject>();
+    private bool should_destroy = true;
+    private int actuallySelected;
 
-
+    private float pos;
     override
     public void SetEnable(int value)
     {
-        SaveGame.Clear();
         base.SetEnable(value);
         PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
         PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
         money = "" + player.cash;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
 
-        VehicleSaver default_vehicle = new VehicleSaver();
-        default_vehicle.carIndex = default_vehicle.wheelsIndex = default_vehicle.motorsIndex = default_vehicle.spoilersIndex = default_vehicle.colorsIndex = default_vehicle.suspensionsIndex = 0;
-        current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle",default_vehicle);
         if (!SaveGame.Exists("vehicle_list"))
         {
             VehicleListSaver default_vehicle_list = new VehicleListSaver();
@@ -61,9 +68,15 @@ public class GarageMenu : Menu
         {
             moded_vehicleList = SaveGame.Load<VehicleListSaver>("vehicle_list");
         }
+        VehicleSaver default_vehicle = new VehicleSaver();
         default_vehicle.carIndex = 0; default_vehicle.wheelsIndex = default_vehicle.motorsIndex = default_vehicle.spoilersIndex = default_vehicle.colorsIndex = default_vehicle.suspensionsIndex = 0;
         current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle", default_vehicle);
-        SpawnVehicle(current_vehicle.carIndex,true);
+        
+        pos = _modifyButton.transform.position.x;
+
+        actuallySelected = current_vehicle.carIndex;
+        SpawnVehicle(current_vehicle.carIndex,should_destroy);
+        should_destroy = false;
     }
 
     public void HandleBackButtonPressed()
@@ -135,17 +148,49 @@ public class GarageMenu : Menu
                 if (c.GetType() == typeof(carModifier))
                 {
                     carModifier a = (carModifier)c;
-                    a.changeWheels(carToSpawn.wheelsIndex);
-                    a.changeColor(carToSpawn.colorsIndex);
+                    if(a._supportsWheel)
+                        a.changeWheels(carToSpawn.wheelsIndex);
+                    if(a._supportsColor)
+                        a.changeColor(carToSpawn.colorsIndex);
+                    if (a._supportsSpoilers)
+                        a.changeSpoilers(carToSpawn.spoilersIndex);
+                    if (a._supportsSuspensions)
+                        a.changeSuspensions(carToSpawn.suspensionsIndex);
+                    if (a._supportsMotors)
+                        a.changeMotor(carToSpawn.motorsIndex);
                 }
                 c.enabled = false;
             }
+
             spawned_vehicles.Add(current_vehicle.carIndex, _originalCar);
         }
 
-        SaveGame.Save<VehicleSaver>("current_vehicle", current_vehicle);
-    }
+        
+        _nameLabel.text = carlist.cars[i].carName;
+        _surfaceLabel.text = "Surface: " + carlist.cars[i].surface;
+        _scaleLabel.text = "Scale: 1:" + ((int)carlist.cars[i].scale);
+        _weightLabel.text = "Weight: " + (Math.Round(_originalCar.GetComponent<Rigidbody>().mass / 1000,1).ToString("0.0")) + " kg";
+        _topspeedLabel.text = "TopSpeed: " + _originalCar.GetComponent<CarController>().MaxSpeed + " mph";
 
+        CheckSelected();
+    }
+    private void CheckSelected() 
+    {
+        if (actuallySelected == current_vehicle.carIndex)
+        {
+            Debug.Log(actuallySelected+" = "+current_vehicle.carIndex);
+            _selectButton.interactable = false;
+            _selectButton.gameObject.SetActive(false);
+            _modifyButton.transform.position = new Vector3(_nameLabel.transform.position.x, _modifyButton.transform.position.y, _modifyButton.transform.position.z);
+        }
+        else 
+        {
+            _modifyButton.transform.position = new Vector3(pos, _modifyButton.transform.position.y, _modifyButton.transform.position.z);
+            _selectButton.gameObject.SetActive(true);
+            _selectButton.interactable = true;
+
+        }
+    }
     public void HandleNextButtonPressed()
     {
         if (current_vehicle.carIndex + 1 < carlist.cars.Count)
@@ -184,7 +229,9 @@ public class GarageMenu : Menu
     }
     public void HandleSelectButtonPressed()
     {
-        Debug.Log("NOT IMPLEMENTED YET");
+        SaveGame.Save<VehicleSaver>("current_vehicle", current_vehicle);
+        actuallySelected = current_vehicle.carIndex;
+        CheckSelected();
     }
 
     public void HandleModifyButtonPressed()
