@@ -41,6 +41,11 @@ public class GarageMenu : Menu
     private int actuallySelected;
 
     private float pos;
+    private void Start()
+    {
+        pos = _modifyButton.transform.position.x;
+    }
+
     override
     public void SetEnable(int value)
     {
@@ -72,7 +77,7 @@ public class GarageMenu : Menu
         default_vehicle.carIndex = 0; default_vehicle.wheelsIndex = default_vehicle.motorsIndex = default_vehicle.spoilersIndex = default_vehicle.colorsIndex = default_vehicle.suspensionsIndex = 0;
         current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle", default_vehicle);
         
-        pos = _modifyButton.transform.position.x;
+        
 
         actuallySelected = current_vehicle.carIndex;
         SpawnVehicle(current_vehicle.carIndex,should_destroy);

@@ -19,7 +19,26 @@ namespace Data
             this.scene_name = scene_name;
             this.map_scene = SceneManager.GetSceneByName(scene_name);
         }
-
+        public static MapSaver MapSaverFromData(MapData md)
+        {
+            MapSaver ret = new MapSaver(md.scene_name);
+            ret.name = md.name;
+            ret.map_image = md.map_image;
+            ret.max_laps = md.max_laps;
+            ret.map_scene = md.map_scene;
+            ret.max_opponents = md.max_opponents;
+            return ret;
+        }
+        public MapData MapDataFromSaver()
+        {
+            MapData ret = MapData.Create(this.scene_name);
+            ret.name = this.name;
+            ret.map_image = this.map_image;
+            ret.max_laps = this.max_laps;
+            ret.map_scene = this.map_scene;
+            ret.max_opponents = this.max_opponents;
+            return ret;
+        }
         /*
         public new string name { get => name; private set { name = value; } }
         public int max_opponents { get => max_opponents; private set { max_opponents = value; } }

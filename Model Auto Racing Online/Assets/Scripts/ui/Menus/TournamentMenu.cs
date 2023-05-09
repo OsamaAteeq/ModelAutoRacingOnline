@@ -15,6 +15,10 @@ public class TournamentMenu : Menu
     [SerializeField] private Button _storeButton;
 
     [SerializeField] private Canvas _blocker;
+    [SerializeField] private Canvas _buyPanel;
+    [SerializeField] private Button _buyButton;
+    [SerializeField] private Button _dontBuyButton;
+    [SerializeField] private TextMeshProUGUI _optionLabel;
 
     [SerializeField] private GridLayoutGroup _container;
 
@@ -28,10 +32,13 @@ public class TournamentMenu : Menu
     private string money;
     private bool tournament_bought = false;
     private bool opened = false;
+    private TournamentData tournamentData;
     private TournamentSaver tournament;
     private InventorySaver inventory;
     private Button[] buttons;
     private PersonalSaver player;
+
+    private bool activated = false;
 
     private int count = 0;
     private void Start()
@@ -41,11 +48,17 @@ public class TournamentMenu : Menu
     override
     public void SetEnable(int value)
     {
+
+        activated = false;
         PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
         player = SaveGame.Load<PersonalSaver>("player", temp);
         money = "" + player.cash;
         intmoney = player.cash;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
+
+        _buyButton.interactable = false;
+        _dontBuyButton.interactable = false;
+        _buyPanel.enabled = false;
 
         tournament_bought = false;
         tournament = SaveGame.Load<TournamentSaver>("current_tournament");
@@ -73,14 +86,18 @@ public class TournamentMenu : Menu
         {
             if (td.name == tournament.name && td.races.Count == tournament.races.Count) 
             {
+                tournamentData = td;
+                //tournament.cost = td.cost;
                 int rcount = td.races.Count;
                 for (int fk = 0; fk < rcount; fk++) 
                 {
+                    
                     tournament.races[fk].buttonPic = td.races[fk].buttonPic;
                 }
+                break;
             }
         }
-        foreach (RaceSaver rd in tournament.races)
+        foreach (RaceData rd in tournamentData.races)
         {
             count++;
             GameObject _btn = Instantiate<GameObject>(_raceButton.gameObject, _container.transform);
@@ -103,7 +120,7 @@ public class TournamentMenu : Menu
                 }
                 c++;
             }
-            RaceSaver rd2 = rd;
+            RaceSaver rd2 = RaceSaver.RaceSaverFromData(rd);
             
 
             _btn.GetComponent<Button>().onClick.AddListener(delegate { HandleRaceButtonPressed(rd2); });
@@ -113,11 +130,11 @@ public class TournamentMenu : Menu
         buttons = _container.GetComponentsInChildren<Button>();
 
         base.SetEnable(value);
-        
+
 
         foreach (TournamentSaver td in inventory.list_items) 
         {
-            if (td == tournament) 
+            if (td.name == tournament.name) 
             {
                 tournament_bought = true;
                 break;
@@ -125,17 +142,26 @@ public class TournamentMenu : Menu
         }
         if (tournament_bought || intmoney >= tournament.cost)
         {
+
+            _blocker.enabled = false;
+            Debug.Log("Blocker Disabled");
             if (intmoney >= tournament.cost && !tournament_bought)
             {
-                player.cash = (intmoney - tournament.cost);
-                inventory.list_items.Add(tournament);
-                money = "" + intmoney;
-                SaveGame.Save<PersonalSaver>("player", player);
-                SaveGame.Save<InventorySaver>("inventory", inventory);
+                _buyPanel.enabled = true;
+                _buyPanel.overrideSorting = true;
+
+                Debug.Log("SEEMS OK");
+                _buyButton.GetComponentInChildren<TextMeshProUGUI>().text = ""+tournament.cost;
+                _backButton.interactable = false;
+                _storeButton.interactable = false;
+
+                _optionLabel.text = "Would you like to buy\n" + tournament.name;
+                
+                _buyButton.interactable = true;
+                _dontBuyButton.interactable = true;
             }
-            _blocker.enabled = false;
         }
-        if (_blocker.enabled)
+        if (_blocker.enabled || _buyPanel.enabled)
         {
             _backButton.interactable = false;
             _storeButton.interactable = false;
@@ -148,39 +174,66 @@ public class TournamentMenu : Menu
 
         foreach (Button _btn in buttons)
         {
-            int cost = int.MaxValue;
             _btn.interactable = false;
-            TextMeshProUGUI[] tmps = _btn.GetComponentsInChildren<TextMeshProUGUI>();
-            int c = 0;
-            foreach (TextMeshProUGUI t in tmps)
+            if (!_blocker.enabled && !_buyPanel.enabled)
             {
-                if (c == 0)
+
+                int cost = int.MaxValue;
+                TextMeshProUGUI[] tmps = _btn.GetComponentsInChildren<TextMeshProUGUI>();
+                int c = 0;
+                foreach (TextMeshProUGUI t in tmps)
                 {
-                    cost = (Int32.Parse(t.text.Substring(5).Trim()));
+                    if (c == 0)
+                    {
+                        cost = (Int32.Parse(t.text.Substring(5).Trim()));
+                    }
+                    c++;
                 }
-                c++;
-            }
-            if (intmoney >= cost)
-            {
-                _btn.interactable = true;
+                if (intmoney >= cost)
+                {
+                    _btn.interactable = true;
+                }
             }
         }
     }
-
-    
     public void Update()
     {
         if (_blocker.enabled && _menuManager.GetCurrentMenu == MenuType.OfflineTournament && !opened) 
         {
             opened = true;
             StartCoroutine(waiter());
-
+        }
+        if (!_blocker.enabled && _menuManager.GetCurrentMenu == MenuType.OfflineTournament && !_buyPanel.enabled && !activated) 
+        {
+            activated = true;
+            foreach (Button _btn in buttons)
+            {
+                _btn.interactable = false;
+                if (!_blocker.enabled && !_buyPanel.enabled)
+                {
+                    int cost = int.MaxValue;
+                    TextMeshProUGUI[] tmps = _btn.GetComponentsInChildren<TextMeshProUGUI>();
+                    int c = 0;
+                    foreach (TextMeshProUGUI t in tmps)
+                    {
+                        if (c == 0)
+                        {
+                            cost = (Int32.Parse(t.text.Substring(5).Trim()));
+                        }
+                        c++;
+                    }
+                    if (intmoney >= cost)
+                    {
+                        _btn.interactable = true;
+                    }
+                }
+            }
         }
     }
 
     public void HandleBackButtonPressed()
     {
-
+        _buyPanel.overrideSorting = false;
         SaveGame.Delete("current_tournament");
         _menuManager.SwitchMenu(MenuType.Singleplayer);
         /*_menuManager.CloseMenu();
@@ -220,7 +273,12 @@ public class TournamentMenu : Menu
         SaveGame.Save<PersonalSaver>("player", player);
         money = "" + intmoney;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-
+        race.setMapName();
+        foreach (RaceData rd in tournamentData.races) 
+        {
+            Debug.Log("TOURNAMENT DATA : MAP : " + race.MapName);
+        }
+        Debug.Log("TOURNAMENT MENU : MAP : " + race.MapName);
         SaveGame.Save<RaceSaver>("current_race", race);
         _menuManager.SwitchMenu(MenuType.SingleplayerMaps);
 
@@ -229,6 +287,21 @@ public class TournamentMenu : Menu
     public void HandleStoreButtonPressed()
     {
         Debug.Log("NOT IMPLEMENTED YET");
+    }
+    public void HandleBuyButtonPressed()
+    {
+        intmoney -= tournament.cost;
+        player.cash = intmoney;
+        SaveGame.Save<PersonalSaver>("player", player);
+        money = "" + intmoney;
+        _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
+
+
+        inventory.list_items.Add(tournament);
+        SaveGame.Save<InventorySaver>("inventory", inventory);
+
+        _buyPanel.overrideSorting = false;
+        _buyPanel.enabled = false;
     }
     private IEnumerator waiter()
     {

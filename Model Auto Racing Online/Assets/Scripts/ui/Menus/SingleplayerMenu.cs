@@ -31,29 +31,29 @@ public class SingleplayerMenu : Menu
     public void Start()
     {
         _tournaments = _tournamentsList.tournaments;
-        foreach (TournamentData td in _tournaments) 
+        foreach (TournamentData td in _tournaments)
         {
             GameObject _btn = Instantiate<GameObject>(_tournamentButton.gameObject, _container.transform);
             TextMeshProUGUI[] tmps = _btn.GetComponentsInChildren<TextMeshProUGUI>();
             _btn.GetComponent<Image>().sprite = td.buttonPic;
             int c = 0;
-            foreach (TextMeshProUGUI t in tmps) 
+            foreach (TextMeshProUGUI t in tmps)
             {
-                if (c == 1) 
+                if (c == 1)
                 {
                     t.text = td.name;
                 }
                 if (c == 0)
                 {
-                    t.text = "Entry "+td.cost;
+                    t.text = "Entry " + td.cost;
                 }
                 c++;
             }
             TournamentData td2 = td;
             _btn.GetComponent<Button>().onClick.AddListener(delegate { HandleTournamentButtonPressed(td2); });
         }
-        _container.transform.LeanSetLocalPosX((_container.cellSize.x+ _container.spacing.x)*_tournaments.Count);
-        
+        _container.transform.LeanSetLocalPosX((_container.cellSize.x + _container.spacing.x) * _tournaments.Count);
+
     }
 
     override
@@ -67,7 +67,7 @@ public class SingleplayerMenu : Menu
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
     }
 
-   
+
 
     public void HandleBackButtonPressed()
     {
@@ -115,9 +115,9 @@ public class SingleplayerMenu : Menu
         saver.name = td.name;
         saver.cost = td.cost;
         saver.buttonPic = td.buttonPic;
-        foreach (RaceData rd in td.races) 
+        foreach (RaceData rd in td.races)
         {
-            saver.races.Add(new RaceSaver(new MapSaver(rd.map.scene_name),rd.lap,rd.opponent,rd.is_race,rd.type,rd.order,rd.difficulty,rd.income_factor,rd.cost));
+            saver.races.Add(new RaceSaver(new MapSaver(rd.map.scene_name), rd.lap, rd.opponent, rd.is_race, rd.type, rd.order, rd.difficulty, rd.income_factor, rd.cost));
         }
         SaveGame.Save<TournamentSaver>("current_tournament", saver);
         _menuManager.SwitchMenu(MenuType.OfflineTournament);

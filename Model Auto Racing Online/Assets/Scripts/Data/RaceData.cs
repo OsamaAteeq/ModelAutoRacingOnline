@@ -13,10 +13,13 @@ namespace Data
         }
         public enum RaceOrder
         {
-            Straight
+            Straight,
+            Reverse
         }
         public enum RaceDifficulty
         {
+            Easy,
+            Medium,
             Hard
         }
         public int lap;
@@ -138,6 +141,10 @@ namespace Data
         {
             is_tournament = false;
             this.income_factor = 3;
+        }
+        public bool isTournament()
+        {
+            return is_tournament;
         }
     }
 }

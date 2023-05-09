@@ -14,7 +14,10 @@ namespace Data
         public float income_factor;
         public int cost;
         public Sprite buttonPic;
+
         private bool is_tournament = false;
+        private string map_name;
+        public string MapName { get => map_name; private set => map_name=value; }
 
         [System.Serializable]
         public class Standing
@@ -36,6 +39,7 @@ namespace Data
             this.is_tournament = false;
             this.order = order;
             this.difficulty = difficulty;
+            this.MapName = map.name;
 
             List<Standing> s = new List<Standing>();
             this.standings = s;
@@ -54,7 +58,7 @@ namespace Data
             this.income_factor = 0;
             this.cost = 0;
             this.is_tournament = false;
-
+            this.MapName = map.name;
         }
 
         /*
@@ -120,5 +124,56 @@ namespace Data
             is_tournament = false;
             this.income_factor = 3;
         }
+        public void setMapName() 
+        {
+            this.MapName = map.name;
+        }
+
+        public static RaceSaver RaceSaverFromData(RaceData rd) 
+        {
+            MapSaver ms = MapSaver.MapSaverFromData(rd.map);
+            RaceSaver ret = new RaceSaver(ms);
+            ret.lap = rd.lap;
+            ret.is_race = rd.is_race;
+            ret.is_tournament = rd.isTournament();
+            ret.setMapName();
+            ret.type = rd.type;
+            ret.cost = rd.cost;
+            ret.buttonPic = rd.buttonPic;
+            ret.difficulty = rd.difficulty;
+            ret.income_factor = rd.income_factor;
+            ret.opponent = rd.opponent;
+            ret.order = rd.order;
+
+            List<Standing> s = new List<Standing>();
+            foreach (RaceData.Standing rds in rd.standings) 
+            {
+                Standing rss = new Standing();
+                rss.person = rds.person;
+                rss.pos = rds.pos;
+                s.Add(rss);
+            }
+
+            return ret;
+        }
+
+        public RaceData RaceDataFromSaver()
+        {
+            MapData md = this.map.MapDataFromSaver();
+            RaceData ret = RaceData.Create(md,this.lap,this.opponent,this.is_race,this.type,this.order,this.difficulty,this.income_factor,this.cost);
+            ret.includeTournament(income_factor);
+
+            List<RaceData.Standing> s = new List<RaceData.Standing>();
+            foreach (Standing rss in standings)
+            {
+                RaceData.Standing rds = new RaceData.Standing();
+                rds.person = rss.person;
+                rds.pos = rss.pos;
+                s.Add(rds);
+            }
+            ret.standings = s;
+            return ret;
+        }
+
     }
 }
