@@ -8,5 +8,6 @@
     Multiplayer,
     Options,
     OfflineTournament,
-    SingleplayerMaps
+    SingleplayerMaps,
+    Modification
 }

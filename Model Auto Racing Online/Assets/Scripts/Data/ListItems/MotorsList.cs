@@ -5,7 +5,7 @@ namespace Data
     [CreateAssetMenu(fileName = "new MotorsList", menuName = "MotorsList")]
     public class MotorsList : ScriptableObject
     {
-        public List<MotorItem> spoilers = new List<MotorItem>();
+        public List<MotorItem> motors = new List<MotorItem>();
     }
 }
 

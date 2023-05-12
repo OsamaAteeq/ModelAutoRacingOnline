@@ -5,6 +5,9 @@ namespace Data
     [CreateAssetMenu(fileName = "new Wheel", menuName = "Wheel")]
     public class Wheel : Item
     {
+        [Header("Image :")]
+        public Sprite wheelImage;
+
         [Header("Front :")]
         public GameObject front_right_wheel;
         public GameObject front_left_wheel;

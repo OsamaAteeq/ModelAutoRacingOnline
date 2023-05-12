@@ -10,10 +10,10 @@ public class carModifier : MonoBehaviour
 {
     [Header("Wheels :")]
     [SerializeField] public bool _supportsWheel;
-    [SerializeField] private WheelsList allSupportedWheels;
+    [SerializeField] public WheelsList allSupportedWheels;
     [Header("Colors :")]
     [SerializeField] public bool _supportsColor;
-    [SerializeField] private ColorsList allSupportedColors;
+    [SerializeField] public ColorsList allSupportedColors;
     [SerializeField] private Material mainMaterial;
     [SerializeField] private Material darkerMaterial;
     [SerializeField] private float darkFactor = 4;
@@ -23,13 +23,13 @@ public class carModifier : MonoBehaviour
     [Header("Spoilers :")]
     [SerializeField] public bool _supportsSpoilers;
     [SerializeField] private GameObject _attachedSpoiler;
-    [SerializeField] private SpoilersList allSupportedSpoilers;
+    [SerializeField] public SpoilersList allSupportedSpoilers;
     [Header("Motors :")]
     [SerializeField] public bool _supportsMotors;
-    [SerializeField] private MotorsList allSupportedMotors;
+    [SerializeField] public MotorsList allSupportedMotors;
     [Header("Suspensions :")]
     [SerializeField] public bool _supportsSuspensions;
-    [SerializeField] private SuspensionsList allSupportedSuspensions;
+    [SerializeField] public SuspensionsList allSupportedSuspensions;
 
     [Header("Inherit References :")]
     
@@ -42,6 +42,17 @@ public class carModifier : MonoBehaviour
     private Suspension[] suspensions = new Suspension[4];
 
     private CarController cc;
+
+    private int currentWheelIndex;
+    public int Wheel { get => currentWheelIndex; }
+    private int currentColorIndex;
+    public int CarColor { get => currentColorIndex; }
+    private int currentSuspensionIndex;
+    public int Suspension { get => currentSuspensionIndex; }
+    private int currentSpoilerIndex;
+    public int Spoiler { get => currentSpoilerIndex; }
+    private int currentMotorIndex;
+    public int Motor { get => currentMotorIndex; }
 
     private void OnEnable()
     {
@@ -110,6 +121,7 @@ public class carModifier : MonoBehaviour
                 Destroy(temp_wheel);
 
             }
+            currentWheelIndex = i;
             cc.startFunction();
         }
         else 
@@ -181,6 +193,8 @@ public class carModifier : MonoBehaviour
             }
             _attachedSpoiler.transform.position = new Vector3(t.position.x, t.position.y + addToNew, t.position.z);
             _attachedSpoiler.transform.rotation = t.rotation;
+
+            currentSpoilerIndex = i;
         }
         else 
         {
@@ -206,6 +220,8 @@ public class carModifier : MonoBehaviour
                 changeToColor = Color.HSVToRGB(hue, saturation/lightFactor, value);
                 lighterMaterial.color = changeToColor;
             }
+
+            currentColorIndex = i;
         }
         else
         {

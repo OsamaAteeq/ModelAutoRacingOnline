@@ -28,7 +28,9 @@ public class GarageMenu : Menu
     [SerializeField] private Button _selectButton;
     [SerializeField] private Button _modifyButton;
 
+    [Header("Inherit Other References :")]
     [SerializeField] private GameObject _originalCar;
+    [SerializeField] private ModificationMenu modificationMenu;
     [Header("Scriptable Objects :")]
     [SerializeField] private CarsList carlist;
 
@@ -49,6 +51,7 @@ public class GarageMenu : Menu
     override
     public void SetEnable(int value)
     {
+        Debug.Log("Garage Enabled");
         base.SetEnable(value);
         PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
         PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
@@ -241,7 +244,12 @@ public class GarageMenu : Menu
 
     public void HandleModifyButtonPressed()
     {
-        Debug.Log("NOT IMPLEMENTED YET");
+        modificationMenu.Car = _originalCar;
+        SaveGame.Save<VehicleSaver>("current_vehicle", current_vehicle);
+        actuallySelected = current_vehicle.carIndex;
+        CheckSelected();
+        should_destroy = true;
+        _menuManager.SwitchMenu(MenuType.Modification);
     }
 
     #region Event Handler
