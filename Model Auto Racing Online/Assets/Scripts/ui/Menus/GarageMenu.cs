@@ -42,6 +42,8 @@ public class GarageMenu : Menu
     private bool should_destroy = true;
     private int actuallySelected;
 
+    private InventorySaver inventory;
+
     private float pos;
     private void Start()
     {
@@ -57,6 +59,16 @@ public class GarageMenu : Menu
         PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
         money = "" + player.cash;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
+
+        if (SaveGame.Exists("inventory"))
+        {
+            inventory = SaveGame.Load<InventorySaver>("inventory");
+        }
+        else
+        {
+            inventory = new InventorySaver();
+        }
+
 
         if (!SaveGame.Exists("vehicle_list"))
         {
@@ -76,6 +88,20 @@ public class GarageMenu : Menu
         {
             moded_vehicleList = SaveGame.Load<VehicleListSaver>("vehicle_list");
         }
+        int loadedLength = moded_vehicleList.moded_vehicles.Count;
+        int allCarsLength = carlist.cars.Count;
+        if (loadedLength < allCarsLength) 
+        {
+            for (int i = loadedLength; i < allCarsLength; i++) 
+            {
+                    VehicleSaver vs = new VehicleSaver();
+                    vs.carIndex = i; vs.wheelsIndex = vs.motorsIndex = vs.spoilersIndex = vs.colorsIndex = vs.suspensionsIndex = 0;
+                    moded_vehicleList.moded_vehicles.Add(vs);
+            }
+
+        SaveGame.Save<VehicleListSaver>("vehicle_list", moded_vehicleList);
+        }
+
         VehicleSaver default_vehicle = new VehicleSaver();
         default_vehicle.carIndex = 0; default_vehicle.wheelsIndex = default_vehicle.motorsIndex = default_vehicle.spoilersIndex = default_vehicle.colorsIndex = default_vehicle.suspensionsIndex = 0;
         current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle", default_vehicle);
@@ -186,17 +212,17 @@ public class GarageMenu : Menu
     {
         if (actuallySelected == current_vehicle.carIndex)
         {
-            Debug.Log(actuallySelected+" = "+current_vehicle.carIndex);
+            Debug.Log(actuallySelected + " = " + current_vehicle.carIndex);
             _selectButton.interactable = false;
             _selectButton.gameObject.SetActive(false);
             _modifyButton.transform.position = new Vector3(_nameLabel.transform.position.x, _modifyButton.transform.position.y, _modifyButton.transform.position.z);
         }
-        else 
+        else
         {
+            //if()
             _modifyButton.transform.position = new Vector3(pos, _modifyButton.transform.position.y, _modifyButton.transform.position.z);
             _selectButton.gameObject.SetActive(true);
             _selectButton.interactable = true;
-
         }
     }
     public void HandleNextButtonPressed()

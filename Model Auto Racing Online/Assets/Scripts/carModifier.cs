@@ -43,15 +43,15 @@ public class carModifier : MonoBehaviour
 
     private CarController cc;
 
-    private int currentWheelIndex;
+    private int currentWheelIndex = 0;
     public int Wheel { get => currentWheelIndex; }
-    private int currentColorIndex;
+    private int currentColorIndex = 0;
     public int CarColor { get => currentColorIndex; }
-    private int currentSuspensionIndex;
+    private int currentSuspensionIndex = 0;
     public int Suspension { get => currentSuspensionIndex; }
-    private int currentSpoilerIndex;
+    private int currentSpoilerIndex = 0;
     public int Spoiler { get => currentSpoilerIndex; }
-    private int currentMotorIndex;
+    private int currentMotorIndex = 0;
     public int Motor { get => currentMotorIndex; }
 
     private void OnEnable()
@@ -60,6 +60,7 @@ public class carModifier : MonoBehaviour
         old_WheelColliders = cc.m_WheelColliders;
         old_WheelMeshes = cc.m_WheelMeshes;
         old_WheelEffects = cc.m_WheelEffects;
+        
     }
 
     public void changeWheels(int i)

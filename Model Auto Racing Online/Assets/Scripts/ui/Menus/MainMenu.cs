@@ -37,7 +37,7 @@ public class MainMenu : Menu
     public void SetEnable(int value) 
     {
         base.SetEnable(value);
-        SaveGame.Clear();
+        //SaveGame.Clear();                                                         //Testing purpose only
         PersonalSaver temp = new PersonalSaver("0", "User Name", 1000, new Color(255f / 255, 189f / 255, 0));
         if (SaveGame.Exists("player"))
         {

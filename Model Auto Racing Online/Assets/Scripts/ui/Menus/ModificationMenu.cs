@@ -20,17 +20,25 @@ public class ModificationMenu : Menu
        
     }
 
-    [Header("Inherit References :")]
+    [Header("Inherit Buttons :")]
     [SerializeField] private Button _backButton;
     [SerializeField] private Button _storeButton;
     [SerializeField] private Button _cancelButton;
     [SerializeField] private Button _confirmButton;
 
-    [Header(" ")]
+
+    [Header("Inherit Labels")]
+    [SerializeField] private TextMeshProUGUI _total;
+
+    [SerializeField] private TextMeshProUGUI _attribute1;
+    [SerializeField] private TextMeshProUGUI _attribute2;
+    [SerializeField] private TextMeshProUGUI _attribute3;
+    [SerializeField] private TextMeshProUGUI _attribute4;
+    [SerializeField] private TextMeshProUGUI _attribute5;
+
+    [Header("Inherit Containers")]
     [SerializeField] private GridLayoutGroup _categoryContainer;
     [SerializeField] private GridLayoutGroup _modsContainer;
-    [SerializeField] private TextMeshProUGUI _total;
-    [SerializeField] private Sprite _blankSlate;
 
 
     [Header("Button Pictures :")]
@@ -39,6 +47,7 @@ public class ModificationMenu : Menu
     [SerializeField] private Sprite _spoilerImage;
     [SerializeField] private Sprite _motorImage;
     [SerializeField] private Sprite _suspensionImage;
+    [SerializeField] private Sprite _blankSlate;
 
     [Header("Button Prefab :")]
     [SerializeField] private Button _categoryButton;
@@ -69,6 +78,21 @@ public class ModificationMenu : Menu
 
     private carModifier _modifier;
 
+    //Save Games
+    private VehicleSaver current_vehicle;
+    private VehicleListSaver moded_vehicleList;
+
+    //Attributes
+    private float _weight;
+    private float _drift;
+    private float _acceleration;
+    private float _topSpeed;
+    private float _grip;
+    private float _suspensionHeight;
+    private float _spring;
+    private float _damper;
+    private float _downforce;
+
     private void Start()
     {
 
@@ -77,6 +101,7 @@ public class ModificationMenu : Menu
     override
     public void SetEnable(int value)
     {
+        EmptyAttributes();
         selectedCategory = -1;
         selectedMod = -1;
         Button[] original = _categoryContainer.GetComponentsInChildren<Button>();
@@ -672,26 +697,170 @@ public class ModificationMenu : Menu
             _total.text = ""+totalCost;
         }
     }
+
+    public void EmptyAttributes() 
+    {
+        _attribute1.text = "";
+        _attribute2.text = "";
+        _attribute3.text = "";
+        _attribute4.text = "";
+        _attribute5.text = "";
+    }
+
+    public void FillAttributes(string attr1, string attr2 = "", string attr3 = "", string attr4 = "", string attr5 = "" ) 
+    {
+        attr1 = attr1.Trim();
+        attr2 = attr2.Trim();
+        attr3 = attr3.Trim();
+        attr4 = attr4.Trim();
+        attr5 = attr5.Trim();
+        List<string> attributes = new List<string>();
+        check(attr1);
+        check(attr2);
+        check(attr3);
+        check(attr4);
+        check(attr5);
+
+        void check(string attr) 
+        {
+            if (attr1 != "")
+            {
+                attributes.Add(attr1);
+            }
+        }
+
+        if (attributes.Count == 0) 
+        {
+            _attribute1.text = "";
+            _attribute2.text = "";
+            _attribute3.text = "";
+            _attribute4.text = "";
+            _attribute5.text = "";
+        }
+        if (attributes.Count == 1)
+        {
+            _attribute1.text = "";
+            _attribute2.text = "";
+            _attribute3.text = "";
+            _attribute4.text = attributes[0];
+            _attribute5.text = "";
+        }
+        if (attributes.Count == 2)
+        {
+            _attribute1.text = attributes[0];
+            _attribute2.text = attributes[1];
+            _attribute3.text = "";
+            _attribute4.text = "";
+            _attribute5.text = "";
+        }
+        if (attributes.Count == 3)
+        {
+            _attribute1.text = attributes[0];
+            _attribute2.text = attributes[1];
+            _attribute3.text = "";
+            _attribute4.text = attributes[2];
+            _attribute5.text = "";
+        }
+        if (attributes.Count == 4)
+        {
+            _attribute1.text = attributes[0];
+            _attribute2.text = attributes[1];
+            _attribute3.text = attributes[2];
+            _attribute4.text = "";
+            _attribute5.text = attributes[3];
+        }
+        if (attributes.Count == 5)
+        {
+            _attribute1.text = attributes[0];
+            _attribute2.text = attributes[1];
+            _attribute3.text = attributes[2];
+            _attribute4.text = attributes[3];
+            _attribute5.text = attributes[4];
+        }
+
+    }
         public void HandleBackButtonPressed()
     {
         _originalCar.GetComponentInParent<Rotate>().isTouchRotatable = false;
         _menuManager.SwitchMenu(MenuType.Garage);
     }
 
-    
+    public void HandleConfirmButtonPressed()
+    {
+        if (cart.Count == 0)
+        {
+            HandleBackButtonPressed();
+        }
+        else
+        {
+            bool bought = false;
 
-    public void HandleSaveButtonPressed()
-    {
-        Debug.Log("NOT IMPLEMENTED YET");
-    }
-    public void HandleCancelButtonPressed()
-    {
-        Debug.Log("NOT IMPLEMENTED YET");
-    }
+            if (bought || _total.text == "0") 
+            {
+                current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle");
+                moded_vehicleList = SaveGame.Load<VehicleListSaver>("vehicle_list");
+                int vehicleIndex = -1;
+                int n = moded_vehicleList.moded_vehicles.Count;
+                for (int i = 0; i < n; i++)
+                {
+                    if (current_vehicle.carIndex == moded_vehicleList.moded_vehicles[i].carIndex) 
+                    {
+                        vehicleIndex = i;
+                    }
+                }
+                if (vehicleIndex == -1)
+                {
+                    Debug.Log("FK THIS SHIT");
+                }
+                else
+                {
+                    foreach (int type in cart.Keys)
+                    {
+                        CartItem ci;
+                        cart.TryGetValue(type, out ci);
+                        int index = ci.mod;
+                        switch (type)
+                        {
+                            case 4:
+                                {
 
-    public void HandleStoreButtonPressed()
-    {
-        Debug.Log("NOT IMPLEMENTED YET");
+                                    current_vehicle.suspensionsIndex = index;
+                                    break;
+                                }
+                            case 1:
+                                {
+
+                                    current_vehicle.colorsIndex = index;
+                                    break;
+                                }
+                            case 2:
+                                {
+
+                                    current_vehicle.spoilersIndex = index;
+                                    break;
+                                }
+                            case 3:
+                                {
+
+                                    current_vehicle.motorsIndex = index;
+                                    break;
+                                }
+                            case 0:
+                                {
+                                    current_vehicle.wheelsIndex = index;
+                                    break;
+                                }
+                            default:
+                                break;
+                        }
+                    }
+                    moded_vehicleList.moded_vehicles[vehicleIndex] = current_vehicle;
+
+                    SaveGame.Save<VehicleSaver>("current_vehicle",current_vehicle);
+                    SaveGame.Save<VehicleListSaver>("vehicle_list", moded_vehicleList);
+                }
+            }
+        }    
     }
 
     #region Event Handler
