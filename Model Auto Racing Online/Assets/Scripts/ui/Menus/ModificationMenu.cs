@@ -190,7 +190,62 @@ public class ModificationMenu : Menu
             switch (category)
             {
                 case 4:
-                    { 
+                    {
+                        List<SuspensionItem> wl = _modifier.allSupportedSuspensions.suspensions;
+                        int iter = wl.Count;
+                        for (int i = 0; i < iter; i++)
+                        {
+                            GameObject temp = Instantiate<GameObject>(_modsButton.gameObject, _modsContainer.transform);
+                            modButtons.Add(temp);
+                            Button temp_btn = temp.GetComponentInChildren<Button>();
+                            temp_btn.image.sprite = wl[i].suspensionImage;
+                            TextMeshProUGUI temp_txt = temp.GetComponentInChildren<TextMeshProUGUI>();
+                            Image[] images = temp.GetComponentsInChildren<Image>();
+                            bool bought = false;
+
+                            Image innerimage = images[2];
+                            Image outerimage = images[1];
+                            if (i == _modifier.Suspension)
+                            {
+                                temp_txt.rectTransform.offsetMin = new Vector2(temp_txt.rectTransform.offsetMin.x - innerimage.rectTransform.rect.width, temp_txt.rectTransform.offsetMin.y);
+                                innerimage.enabled = false;
+                                temp_txt.text = "Selected";
+                                selectedMod = i;
+                                Debug.Log("s " + selectedMod);
+                                bought = true;
+                            }
+                            else
+                            {
+                                for (int j = 0; j < _allUpgrades.upgrades.Count; j++)
+                                {
+                                    if (_allUpgrades.upgrades[j] == wl[i])
+                                    {
+                                        for (int k = 0; k < inventory.upgrade_index.Count; k++)
+                                        {
+                                            if (inventory.upgrade_index[k] == j)
+                                            {
+                                                bought = true;
+                                                break;
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+
+                                if ((wl[i].cost != 0) && !bought)
+                                    temp_txt.text = "" + wl[i].cost;
+                                else
+                                {
+                                    temp_txt.rectTransform.offsetMin = new Vector2(temp_txt.rectTransform.offsetMin.x - innerimage.rectTransform.rect.width, temp_txt.rectTransform.offsetMin.y);
+                                    innerimage.enabled = false;
+                                    outerimage.enabled = false;
+                                }
+                            }
+                            int i_ = i;
+                            bool bought_ = bought;
+                            int cost_ = wl[i].cost;
+                            temp_btn.onClick.AddListener(delegate { HandleModButtonPressed(i_, bought_, cost_); });
+                        }
                         break;
                     }
                 case 1:
@@ -255,10 +310,120 @@ public class ModificationMenu : Menu
                     }
                 case 2:
                     {
+                        List<Data.Spoiler> wl = _modifier.allSupportedSpoilers.spoilers;
+                        int iter = wl.Count;
+                        for (int i = 0; i < iter; i++)
+                        {
+                            GameObject temp = Instantiate<GameObject>(_modsButton.gameObject, _modsContainer.transform);
+                            modButtons.Add(temp);
+                            Button temp_btn = temp.GetComponentInChildren<Button>();
+                            temp_btn.image.sprite = wl[i].spoilerImage;
+                            TextMeshProUGUI temp_txt = temp.GetComponentInChildren<TextMeshProUGUI>();
+                            Image[] images = temp.GetComponentsInChildren<Image>();
+                            bool bought = false;
+
+                            Image innerimage = images[2];
+                            Image outerimage = images[1];
+                            if (i == _modifier.Spoiler)
+                            {
+                                temp_txt.rectTransform.offsetMin = new Vector2(temp_txt.rectTransform.offsetMin.x - innerimage.rectTransform.rect.width, temp_txt.rectTransform.offsetMin.y);
+                                innerimage.enabled = false;
+                                temp_txt.text = "Selected";
+                                selectedMod = i;
+                                Debug.Log("s " + selectedMod);
+                                bought = true;
+                            }
+                            else
+                            {
+                                for (int j = 0; j < _allUpgrades.upgrades.Count; j++)
+                                {
+                                    if (_allUpgrades.upgrades[j] == wl[i])
+                                    {
+                                        for (int k = 0; k < inventory.upgrade_index.Count; k++)
+                                        {
+                                            if (inventory.upgrade_index[k] == j)
+                                            {
+                                                bought = true;
+                                                break;
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+
+                                if ((wl[i].cost != 0) && !bought)
+                                    temp_txt.text = "" + wl[i].cost;
+                                else
+                                {
+                                    temp_txt.rectTransform.offsetMin = new Vector2(temp_txt.rectTransform.offsetMin.x - innerimage.rectTransform.rect.width, temp_txt.rectTransform.offsetMin.y);
+                                    innerimage.enabled = false;
+                                    outerimage.enabled = false;
+                                }
+                            }
+                            int i_ = i;
+                            bool bought_ = bought;
+                            int cost_ = wl[i].cost;
+                            temp_btn.onClick.AddListener(delegate { HandleModButtonPressed(i_, bought_, cost_); });
+                        }
                         break;
                     }
                 case 3:
                     {
+                        List<MotorItem> wl = _modifier.allSupportedMotors.motors;
+                        int iter = wl.Count;
+                        for (int i = 0; i < iter; i++)
+                        {
+                            GameObject temp = Instantiate<GameObject>(_modsButton.gameObject, _modsContainer.transform);
+                            modButtons.Add(temp);
+                            Button temp_btn = temp.GetComponentInChildren<Button>();
+                            temp_btn.image.sprite = wl[i].motorImage;
+                            TextMeshProUGUI temp_txt = temp.GetComponentInChildren<TextMeshProUGUI>();
+                            Image[] images = temp.GetComponentsInChildren<Image>();
+                            bool bought = false;
+
+                            Image innerimage = images[2];
+                            Image outerimage = images[1];
+                            if (i == _modifier.Motor)
+                            {
+                                temp_txt.rectTransform.offsetMin = new Vector2(temp_txt.rectTransform.offsetMin.x - innerimage.rectTransform.rect.width, temp_txt.rectTransform.offsetMin.y);
+                                innerimage.enabled = false;
+                                temp_txt.text = "Selected";
+                                selectedMod = i;
+                                Debug.Log("s " + selectedMod);
+                                bought = true;
+                            }
+                            else
+                            {
+                                for (int j = 0; j < _allUpgrades.upgrades.Count; j++)
+                                {
+                                    if (_allUpgrades.upgrades[j] == wl[i])
+                                    {
+                                        for (int k = 0; k < inventory.upgrade_index.Count; k++)
+                                        {
+                                            if (inventory.upgrade_index[k] == j)
+                                            {
+                                                bought = true;
+                                                break;
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+
+                                if ((wl[i].cost != 0) && !bought)
+                                    temp_txt.text = "" + wl[i].cost;
+                                else
+                                {
+                                    temp_txt.rectTransform.offsetMin = new Vector2(temp_txt.rectTransform.offsetMin.x - innerimage.rectTransform.rect.width, temp_txt.rectTransform.offsetMin.y);
+                                    innerimage.enabled = false;
+                                    outerimage.enabled = false;
+                                }
+                            }
+                            int i_ = i;
+                            bool bought_ = bought;
+                            int cost_ = wl[i].cost;
+                            temp_btn.onClick.AddListener(delegate { HandleModButtonPressed(i_, bought_, cost_); });
+                        }
                         break;
                     }
                 case 0:
