@@ -73,9 +73,12 @@ public class SingleMapSelection : Menu
     private string map;
     private MapSaver selected_map;
     private int temp = 1;
+    private string scene_name;
+
     private List<string> types = new List<string>();
     private List<string> difficulties = new List<string>();
     private List<string> orders = new List<string>();
+
 
     public void Start()
     {
@@ -145,8 +148,10 @@ public class SingleMapSelection : Menu
             {
                 opponents_to_default = 1;
             }
+            Debug.Log("mp.scene_name : " + mp.scene_name);
             race = new RaceSaver(mp, laps_to_default, opponents_to_default, true, RaceData.RaceType.Race, RaceData.RaceOrder.Straight, RaceData.RaceDifficulty.Hard, 3f, 0);
             selected_map = mp;
+            Debug.Log("selected_map.scene_name : " + selected_map.scene_name);
             SaveGame.Save<RaceSaver>("current_race", race);
         }
         Debug.Log("TYPE : " + race.type);
@@ -440,8 +445,8 @@ public class SingleMapSelection : Menu
 
     private void LoadLevel()
     {
-        Debug.Log(selected_map.map_scene.name);
-        _sceneLoader.LoadScene(selected_map.map_scene.name);
+        Debug.Log(selected_map.scene_name);
+        _sceneLoader.LoadScene(selected_map.scene_name);
     }
 
     public void HandlePreviousOrderButtonPressed()

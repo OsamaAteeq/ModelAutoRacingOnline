@@ -52,6 +52,13 @@ public class ModificationMenu : Menu
     [Header("Button Prefab :")]
     [SerializeField] private Button _categoryButton;
     [SerializeField] private Button _modsButton;
+    [SerializeField] private TextMeshProUGUI _altText;
+
+    [Header("Buy Panel :")]
+    [SerializeField] private Canvas _buyPanel;
+    [SerializeField] private Button _buyButton;
+    [SerializeField] private Button _dontBuyButton;
+    [SerializeField] private TextMeshProUGUI _optionLabel;
 
     [Header("Scriptable Object :")]
     [SerializeField] private UpgradesList _allUpgrades;
@@ -73,6 +80,7 @@ public class ModificationMenu : Menu
     public GameObject Car{ set => _originalCar = value; }
 
     private string money;
+    private int int_money;
     private int selectedCategory = -1;
     private int selectedMod = -1;
 
@@ -93,6 +101,9 @@ public class ModificationMenu : Menu
     private float _damper;
     private float _downforce;
 
+    private int _cost;
+    private PersonalSaver player;
+
     private void Start()
     {
 
@@ -101,6 +112,12 @@ public class ModificationMenu : Menu
     override
     public void SetEnable(int value)
     {
+        _buyButton.interactable = false;
+        _dontBuyButton.interactable = false;
+        _buyPanel.enabled = false;
+        cart.Clear();
+        _cost = 0;
+        _total.text = "" + _cost;
         EmptyAttributes();
         selectedCategory = -1;
         selectedMod = -1;
@@ -114,7 +131,8 @@ public class ModificationMenu : Menu
         int count = 0;
         base.SetEnable(value);
         PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
-        PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
+        player = SaveGame.Load<PersonalSaver>("player", temp);
+        int_money = player.cash;
         money = "" + player.cash;
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
 
@@ -223,8 +241,15 @@ public class ModificationMenu : Menu
                             GameObject temp = Instantiate<GameObject>(_modsButton.gameObject, _modsContainer.transform);
                             modButtons.Add(temp);
                             Button temp_btn = temp.GetComponentInChildren<Button>();
-                            temp_btn.image.sprite = wl[i].suspensionImage;
                             TextMeshProUGUI temp_txt = temp.GetComponentInChildren<TextMeshProUGUI>();
+                            if (wl[i].suspensionImage != null)
+                            { temp_btn.image.sprite = wl[i].suspensionImage; }
+                            else
+                            { 
+                                GameObject alt = Instantiate<GameObject>(_altText.gameObject, temp.transform);
+                                alt.GetComponent<TextMeshProUGUI>().text = "" + (i + 1);
+                            }
+
                             Image[] images = temp.GetComponentsInChildren<Image>();
                             bool bought = false;
 
@@ -342,8 +367,15 @@ public class ModificationMenu : Menu
                             GameObject temp = Instantiate<GameObject>(_modsButton.gameObject, _modsContainer.transform);
                             modButtons.Add(temp);
                             Button temp_btn = temp.GetComponentInChildren<Button>();
-                            temp_btn.image.sprite = wl[i].spoilerImage;
+                            
                             TextMeshProUGUI temp_txt = temp.GetComponentInChildren<TextMeshProUGUI>();
+                            if (wl[i].spoilerImage != null)
+                            { temp_btn.image.sprite = wl[i].spoilerImage; }
+                            else
+                            {
+                                GameObject alt = Instantiate<GameObject>(_altText.gameObject, temp.transform);
+                                alt.GetComponent<TextMeshProUGUI>().text = "" + (i + 1);
+                            }
                             Image[] images = temp.GetComponentsInChildren<Image>();
                             bool bought = false;
 
@@ -401,8 +433,15 @@ public class ModificationMenu : Menu
                             GameObject temp = Instantiate<GameObject>(_modsButton.gameObject, _modsContainer.transform);
                             modButtons.Add(temp);
                             Button temp_btn = temp.GetComponentInChildren<Button>();
-                            temp_btn.image.sprite = wl[i].motorImage;
+                            
                             TextMeshProUGUI temp_txt = temp.GetComponentInChildren<TextMeshProUGUI>();
+                            if (wl[i].motorImage != null)
+                            { temp_btn.image.sprite = wl[i].motorImage; }
+                            else
+                            {
+                                GameObject alt = Instantiate<GameObject>(_altText.gameObject, temp.transform);
+                                alt.GetComponent<TextMeshProUGUI>().text = "" + (i + 1);
+                            }
                             Image[] images = temp.GetComponentsInChildren<Image>();
                             bool bought = false;
 
@@ -462,8 +501,15 @@ public class ModificationMenu : Menu
                             GameObject temp = Instantiate<GameObject>(_modsButton.gameObject, _modsContainer.transform);
                             modButtons.Add(temp);
                             Button temp_btn = temp.GetComponentInChildren<Button>();
-                            temp_btn.image.sprite = wl[i].wheelImage;
+                            
                             TextMeshProUGUI temp_txt = temp.GetComponentInChildren<TextMeshProUGUI>();
+                            if (wl[i].wheelImage != null)
+                            { temp_btn.image.sprite = wl[i].wheelImage; }
+                            else
+                            {
+                                GameObject alt = Instantiate<GameObject>(_altText.gameObject, temp.transform);
+                                alt.GetComponent<TextMeshProUGUI>().text = "" + (i + 1);
+                            }
                             Image[] images = temp.GetComponentsInChildren<Image>();
                             bool bought = false;
                             
@@ -692,8 +738,20 @@ public class ModificationMenu : Menu
             List<CartItem> values = cart.Values.ToList();
             foreach (CartItem ci in values) 
             {
-                totalCost += ci.cost;
+                if (!ci.bought)
+                {
+                    totalCost += ci.cost;
+                }
             }
+            if (totalCost > int_money)
+            {
+                _confirmButton.enabled = false;
+            }
+            else 
+            {
+                _confirmButton.enabled = true;
+            }
+            _cost = totalCost;
             _total.text = ""+totalCost;
         }
     }
@@ -779,8 +837,170 @@ public class ModificationMenu : Menu
         }
 
     }
-        public void HandleBackButtonPressed()
+
+    public void HandleDontBuyButtonPressed()
     {
+
+        _buyButton.interactable = false;
+        _dontBuyButton.interactable = false;
+
+
+        _buyPanel.overrideSorting = false;
+        _buyPanel.enabled = false;
+
+        _backButton.interactable = true;
+        _storeButton.interactable = true;
+
+    }
+
+    public void HandleBuyButtonPressed()
+    {
+        int_money -= _cost;
+        player.cash = int_money;
+        SaveGame.Save<PersonalSaver>("player", player);
+        money = "" + int_money;
+        _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
+
+        current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle");
+        moded_vehicleList = SaveGame.Load<VehicleListSaver>("vehicle_list");
+
+        int vehicleIndex = -1;
+        int n = moded_vehicleList.moded_vehicles.Count;
+
+        for (int i = 0; i < n; i++)
+        {
+            if (current_vehicle.carIndex == moded_vehicleList.moded_vehicles[i].carIndex)
+            {
+                vehicleIndex = i;
+            }
+        }
+
+        foreach (int type in cart.Keys)
+        {
+            CartItem ci;
+            cart.TryGetValue(type, out ci);
+            int index = ci.mod;
+            if (ci.bought)
+            {
+                switch (type)
+                {
+                    case 4:
+                        {
+                            current_vehicle.suspensionsIndex = index;
+                            break;
+                        }
+                    case 1:
+                        {
+                            current_vehicle.colorsIndex = index;
+                            break;
+                        }
+                    case 2:
+                        {
+                            current_vehicle.spoilersIndex = index;
+                            break;
+                        }
+                    case 3:
+                        {
+                            current_vehicle.motorsIndex = index;
+                            break;
+                        }
+                    case 0:
+                        {
+                            current_vehicle.wheelsIndex = index;
+                            break;
+                        }
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                for (int j = 0; j < _allUpgrades.upgrades.Count; j++)
+                {
+                    switch (type)
+                    {
+                        case 4:
+                            {
+
+                                if (_allUpgrades.upgrades[j] == _modifier.allSupportedSuspensions.suspensions[index])
+                                {
+                                    inventory.upgrade_index.Add(j);
+                                }
+
+
+                                current_vehicle.suspensionsIndex = index;
+                                break;
+                            }
+                        case 1:
+                            {
+                                if (_allUpgrades.upgrades[j] == _modifier.allSupportedColors.colors[index])
+                                {
+                                    inventory.upgrade_index.Add(j);
+
+                                }
+
+                                current_vehicle.colorsIndex = index;
+                                break;
+                            }
+                        case 2:
+                            {
+                                if (_allUpgrades.upgrades[j] == _modifier.allSupportedSpoilers.spoilers[index])
+                                {
+                                    inventory.upgrade_index.Add(j);
+
+                                }
+
+                                current_vehicle.spoilersIndex = index;
+                                break;
+                            }
+                        case 3:
+                            {
+                                if (_allUpgrades.upgrades[j] == _modifier.allSupportedMotors.motors[index])
+                                {
+                                    inventory.upgrade_index.Add(j);
+
+                                }
+                                current_vehicle.motorsIndex = index;
+                                break;
+                            }
+                        case 0:
+                            {
+                                if (_allUpgrades.upgrades[j] == _modifier.allSupportedWheels.wheels[index])
+                                {
+                                    inventory.upgrade_index.Add(j);
+
+                                }
+                                current_vehicle.wheelsIndex = index;
+                                break;
+
+                            }
+                        default:
+                            break;
+                    }
+                }
+            }
+
+        }
+
+        SaveGame.Save<InventorySaver>("inventory", inventory);
+
+        _buyPanel.overrideSorting = false;
+        _buyPanel.enabled = false;
+
+        moded_vehicleList.moded_vehicles[vehicleIndex] = current_vehicle;
+        SaveGame.Save<VehicleSaver>("current_vehicle", current_vehicle);
+        SaveGame.Save<VehicleListSaver>("vehicle_list", moded_vehicleList);
+        
+        HandleBackButtonPressed();
+    }
+    
+
+    public void HandleBackButtonPressed()
+    {
+        cart.Clear();
+
+        _cost = 0;
+        _total.text = "" + _cost;
         _originalCar.GetComponentInParent<Rotate>().isTouchRotatable = false;
         _menuManager.SwitchMenu(MenuType.Garage);
     }
@@ -791,75 +1011,25 @@ public class ModificationMenu : Menu
         {
             HandleBackButtonPressed();
         }
+        else if (_cost == 0) 
+        {
+            HandleBuyButtonPressed();
+        }
         else
         {
-            bool bought = false;
+            _buyPanel.enabled = true;
+            _buyPanel.overrideSorting = true;
 
-            if (bought || _total.text == "0") 
-            {
-                current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle");
-                moded_vehicleList = SaveGame.Load<VehicleListSaver>("vehicle_list");
-                int vehicleIndex = -1;
-                int n = moded_vehicleList.moded_vehicles.Count;
-                for (int i = 0; i < n; i++)
-                {
-                    if (current_vehicle.carIndex == moded_vehicleList.moded_vehicles[i].carIndex) 
-                    {
-                        vehicleIndex = i;
-                    }
-                }
-                if (vehicleIndex == -1)
-                {
-                    Debug.Log("FK THIS SHIT");
-                }
-                else
-                {
-                    foreach (int type in cart.Keys)
-                    {
-                        CartItem ci;
-                        cart.TryGetValue(type, out ci);
-                        int index = ci.mod;
-                        switch (type)
-                        {
-                            case 4:
-                                {
+            Debug.Log("SEEMS OK");
+            _buyButton.GetComponentInChildren<TextMeshProUGUI>().text = _total.text;
+            _backButton.interactable = false;
+            _storeButton.interactable = false;
 
-                                    current_vehicle.suspensionsIndex = index;
-                                    break;
-                                }
-                            case 1:
-                                {
+            _optionLabel.text = "Would you like to buy the selected items ?";
 
-                                    current_vehicle.colorsIndex = index;
-                                    break;
-                                }
-                            case 2:
-                                {
+            _buyButton.interactable = true;
+            _dontBuyButton.interactable = true;
 
-                                    current_vehicle.spoilersIndex = index;
-                                    break;
-                                }
-                            case 3:
-                                {
-
-                                    current_vehicle.motorsIndex = index;
-                                    break;
-                                }
-                            case 0:
-                                {
-                                    current_vehicle.wheelsIndex = index;
-                                    break;
-                                }
-                            default:
-                                break;
-                        }
-                    }
-                    moded_vehicleList.moded_vehicles[vehicleIndex] = current_vehicle;
-
-                    SaveGame.Save<VehicleSaver>("current_vehicle",current_vehicle);
-                    SaveGame.Save<VehicleListSaver>("vehicle_list", moded_vehicleList);
-                }
-            }
         }    
     }
 

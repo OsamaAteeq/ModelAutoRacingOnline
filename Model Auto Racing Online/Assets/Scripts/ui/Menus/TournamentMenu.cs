@@ -132,12 +132,17 @@ public class TournamentMenu : Menu
         base.SetEnable(value);
 
 
-        foreach (TournamentSaver td in inventory.list_items) 
+        foreach (ItemSaver iis in inventory.list_items) 
         {
-            if (td.name == tournament.name) 
+            if (iis.GetType() == typeof(TournamentSaver))
             {
-                tournament_bought = true;
-                break;
+                TournamentSaver td = (TournamentSaver)iis;
+
+                if (td.name == tournament.name)
+                {
+                    tournament_bought = true;
+                    break;
+                }
             }
         }
         if (tournament_bought || intmoney >= tournament.cost)

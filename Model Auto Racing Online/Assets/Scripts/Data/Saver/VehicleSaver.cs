@@ -1,7 +1,7 @@
 
 namespace Data
 {
-    public class VehicleSaver
+    public class VehicleSaver : ItemSaver
     {
         public int carIndex;
         public int wheelsIndex;

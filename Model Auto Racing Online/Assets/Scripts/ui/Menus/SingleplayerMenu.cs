@@ -117,7 +117,10 @@ public class SingleplayerMenu : Menu
         saver.buttonPic = td.buttonPic;
         foreach (RaceData rd in td.races)
         {
-            saver.races.Add(new RaceSaver(new MapSaver(rd.map.scene_name), rd.lap, rd.opponent, rd.is_race, rd.type, rd.order, rd.difficulty, rd.income_factor, rd.cost));
+            //Debug.Log(rd.map.scene_name);
+            MapSaver tempMap = new MapSaver(rd.map.scene_name);
+            RaceSaver tempRace = new RaceSaver(tempMap, rd.lap, rd.opponent, rd.is_race, rd.type, rd.order, rd.difficulty, rd.income_factor, rd.cost);
+            saver.races.Add(tempRace);
         }
         SaveGame.Save<TournamentSaver>("current_tournament", saver);
         _menuManager.SwitchMenu(MenuType.OfflineTournament);
