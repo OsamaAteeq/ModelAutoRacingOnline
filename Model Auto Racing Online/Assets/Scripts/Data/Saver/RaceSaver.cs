@@ -16,6 +16,8 @@ namespace Data
         public Sprite buttonPic;
 
         private bool is_tournament = false;
+        private bool is_multiplayer = false;
+
         private string map_name;
         public string MapName { get => map_name; private set => map_name=value; }
 
@@ -119,6 +121,15 @@ namespace Data
             is_tournament = false;
             this.income_factor = income_factor;
         }
+        public bool getMultiplayer() 
+        {
+            return is_multiplayer;
+        }
+        public void setMultiplayer(bool is_multiplayer = true)
+        {
+            this.is_multiplayer = is_multiplayer;
+        }
+
         public void excludeTournament()
         {
             is_tournament = false;
@@ -160,7 +171,7 @@ namespace Data
         public RaceData RaceDataFromSaver()
         {
             MapData md = this.map.MapDataFromSaver();
-            RaceData ret = RaceData.Create(md,this.lap,this.opponent,this.is_race,this.type,this.order,this.difficulty,this.income_factor,this.cost);
+            RaceData ret = RaceData.Create(md, this.lap, this.opponent, this.is_race, this.type, this.order, this.difficulty, this.income_factor, this.cost);
             ret.includeTournament(income_factor);
 
             List<RaceData.Standing> s = new List<RaceData.Standing>();

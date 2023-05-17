@@ -2,42 +2,62 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Data;
 using Random = UnityEngine.Random;
 
 using UnityStandardAssets.Vehicles.Car;
 using UnityStandardAssets.Utility;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using BayatGames.SaveGameFree;
 
 public class RaceManager : MonoBehaviour
 {
-    internal enum RaceType      //use public data enum intead of this
-    {
-        Elimination,
-        Race,
-        TimeTrial
-    }
+    [Header("Race Settings :")]
     [SerializeField]
-    private RaceType raceType = RaceType.Race;
+    private Data.RaceData.RaceType raceType = Data.RaceData.RaceType.Race;
     [SerializeField]
     private float _secondsForEachLap;
     [SerializeField]
     private int _winInTop = 3;
     [SerializeField]
-    private int _awardFactor = 3;
+    private float _awardFactor = 3;
     [SerializeField]
     private int _elemenateEachLap = 1;
 
+    public int wincount = 0;
+
+
+    public int laps = 1;
+    public int currentlap = 1;
+
+
+    public bool startcount = false;
+
+    public float count = 0;
+
+    public bool startrace = false;
+
+    [Header("Inherit UI References :")]
     public Text timerLabel;
     public Text lapsLabel;
-    public Text lapscounter; public GameObject place;
+    public Text lapscounter;
+    public GameObject place;
 
     public Text entertostart;
     public Text finallaptext;
 
+
+    public Font myfont;
+
+    public CanvasRenderer cr;
+
+    [Header("Inherit Scripts :")]
     public MobilePowerChange power;
     public MobileSteeringWheel steer;
+    public cameraMotionScript camera;
 
+    [Header("Race Audio :")]
     public AudioSource[] beeps;
 
     public AudioClip backmusic;
@@ -46,6 +66,7 @@ public class RaceManager : MonoBehaviour
     public AudioClip loserace;
     public AudioClip finallap;
 
+    [Header("Race Images :")]
     public RawImage semaphore;
 
     public Material sem0;
@@ -53,98 +74,138 @@ public class RaceManager : MonoBehaviour
     public Material sem2;
     public Material sem3;
 
-    public int wincount = 0;
 
-    public Font myfont;
+    [Header("Inherit Route :")]
+    public GameObject route;
 
-    public CanvasRenderer cr;
+    [Header("Scriptable Objects :")]
+    public CarsList carList;
+    public Enemies enemies;
 
-    public int laps = 1;
-    public int currentlap = 1;
+
+    //Private
 
     private float time = 0;
-
-    public bool startcount = false;
-
-    public float count = 0;
-
-    public bool startrace = false;
-
     private bool finished = false;
     private int audioplayed = 0;
 
-    float minutes;
-    float seconds;
-    float fraction;
-
+    private float minutes;
+    private float seconds;
+    private float fraction;
     private CarController[] cars;
-
     private List<CarAIControl> Aicars = new List<CarAIControl>();
     private List<CarController> passedCars = new List<CarController>();
     private CarUserControl player;
     private int totalVehicles = 0;
-    private int opp;
-    private string type;
-    private bool race = true;
+    
     private float secondsForTrial;
-    public GameObject route;
 
+    private RaceSaver raceSaver;
+    private TournamentSaver tournamentSaver;
+    private VehicleSaver current_vehicle;
+
+    private bool race;
+    private int opp;
+    private List<PersonalSaver> selected_enemies;
 
     private void Start()
     {
-        //PlayerPref
-        laps = PlayerPrefs.GetInt("lap", 2);
-        opp = PlayerPrefs.GetInt("opponent", 2);
-        type = PlayerPrefs.GetString("type", "Race");
-        _awardFactor = PlayerPrefs.GetInt("factor", 3);
-
-        secondsForTrial = laps * _secondsForEachLap;
-        if (PlayerPrefs.GetString("race", "yes") == "no") 
-            { race = false; }
-        else 
-            { race = true; }
-        switch (type) 
+        raceSaver = SaveGame.Load<RaceSaver>("current_race");
+        if (SaveGame.Exists("current_tournament")) 
         {
-            case "Time":
-                raceType = RaceType.TimeTrial;
-                break;
-            case "Elim":
-                raceType = RaceType.Elimination;
-                break;
-            case "Race":
-                raceType = RaceType.Race;
-                break;
-            default:
-                raceType = RaceType.Race;
-                break;
+            tournamentSaver = SaveGame.Load<TournamentSaver>("current_tournament");
         }
-        Debug.Log("LAPS: " + laps + ": OPP : " + opp + " : Type : " + type + " : RACE : " + race);
+
+        VehicleSaver default_vehicle = new VehicleSaver();
+        default_vehicle.cost = carList.cars[0].cost;
+        default_vehicle.carIndex = 0; default_vehicle.wheelsIndex = default_vehicle.motorsIndex = default_vehicle.spoilersIndex = default_vehicle.colorsIndex = default_vehicle.suspensionsIndex = 0;
+        current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle", default_vehicle);
+
+        laps = raceSaver.lap;
+        _awardFactor = raceSaver.income_factor;
+        race = raceSaver.is_race;
+        raceType = raceSaver.type;
+        secondsForTrial = laps * _secondsForEachLap;
+        opp = raceSaver.opponent;
+        
+        Debug.Log("LAPS: " + laps + ": OPP : " + opp + " : Type : " + raceType + " : RACE : " + race);
 
         beeps = place.GetComponents<AudioSource>();
         beeps[4].PlayOneShot(racestart);
         cars = GetComponentsInChildren<CarController>();
-        
-        foreach (CarController car in cars)
+        int rand_player_index = (int) Math.Round((double)Random.Range(0, (cars.Length - 1)));
+
+        int size = cars.Length;
+        Color cc_color = new Color(.2f,.2f,.2f,1f);
+        for (int i = 0; i<size;i++)
         {
-            totalVehicles++;
-            if (car.GetComponent<CarUserControl>())
+            CarController car = cars[i].GetComponent<CarController>();
+            if (totalVehicles == rand_player_index)
             {
-                player = car.gameObject.GetComponent<CarUserControl>();
-                player.enabled = false;
+                WaypointCircuit wc = car.GetComponent<WaypointProgressTracker>().circuit;
+
+                GameObject _originalCar = car.gameObject;
                 Debug.Log("Player Found");
+                Destroy(_originalCar);
+                Transform t = _originalCar.transform.parent.transform;
+                Transform t1 = _originalCar.transform;
+                _originalCar = Instantiate(carList.cars[current_vehicle.carIndex].car, t);
+                _originalCar.transform.position = t1.position;
+                _originalCar.transform.rotation = t1.rotation;
+
+                
+
+                carModifier a = car.GetComponent<carModifier>();
+                cc_color = car.color;
+
+                if (a._supportsWheel)
+                    a.changeWheels(current_vehicle.wheelsIndex);
+                if (a._supportsColor)
+                {
+                    a.changeColor(current_vehicle.colorsIndex);
+                    cc_color = a.allSupportedColors.colors[current_vehicle.colorsIndex].color;
+                }
+                else 
+                {
+                    PersonalSaver ps = SaveGame.Load<PersonalSaver>("player");
+                    car.color = ps.color;
+                }
+                if (a._supportsSpoilers)
+                    a.changeSpoilers(current_vehicle.spoilersIndex);
+                if (a._supportsSuspensions)
+                    a.changeSuspensions(current_vehicle.suspensionsIndex);
+                if (a._supportsMotors)
+                    a.changeMotor(current_vehicle.motorsIndex);
+
+
+                car.tim = this;
+                _originalCar.GetComponent<CarAIControl>().enabled = false;
+                player = _originalCar.GetComponent<CarUserControl>();
+                camera.car = _originalCar.transform;
+                power.mcc = steer.mcc = _originalCar.GetComponent<MobileCarController>();
+                _originalCar.GetComponent<WaypointProgressTracker>().circuit = wc;
+                _originalCar.tag = "Player";
+                player.enabled = false;
+
+                car.color = cc_color;
             }
-            else if (car.gameObject.GetComponent<CarAIControl>())
+            else 
             {
-            
+                //NEED TO SPAWN RANDOM ENEMY VEHICLES
+                car.gameObject.GetComponent<CarUserControl>().enabled = false;
+                car.gameObject.GetComponent<MobileCarController>().enabled = false;
                 CarAIControl aicar = car.gameObject.GetComponent<CarAIControl>();
                 Aicars.Add(aicar);
                 aicar.enabled = false;
                 Debug.Log("AI Found");
             }
+            
+            totalVehicles++;
             car.GetComponent<CarSelfRighting>().SetActive(false);
         }
+        player.GetComponent<CarController>().color = cc_color;
         int opp_limit;
-        if (race == true && type!="Time")
+        if (race == true && raceType != RaceData.RaceType.TimeTrail)
         {
             opp_limit = Aicars.Count - opp;
         }
@@ -162,9 +223,52 @@ public class RaceManager : MonoBehaviour
             opp_limit--;
             totalVehicles--;
         }
+
+        List<PersonalSaver> shuffled_enemies = Shuffle(enemies.enemy_list);
+        selected_enemies = shuffled_enemies.GetRange(0, Aicars.Count);
+        Color playerColor = player.GetComponent<carModifier>().allSupportedColors.colors[current_vehicle.colorsIndex].color;
+        int iter = 0;
+        foreach (CarAIControl cac in Aicars) 
+        {
+            if (selected_enemies[iter].color == playerColor) 
+            {
+                selected_enemies[iter] = shuffled_enemies[selected_enemies.Count];
+            }
+            CarController cc = cac.GetComponent<CarController>();
+            cc.color = selected_enemies[iter].color;
+            carModifier cm = cac.GetComponent<carModifier>();
+            if (cm._supportsColor)
+            {
+                int length = cm.allSupportedColors.colors.Count;
+                int colorindex = Random.Range(0, length - 1);
+                for (int i = 0; i < length; i++)
+                {
+                    if (cm.allSupportedColors.colors[i].color == cc.color)
+                    {
+                        colorindex = i;
+                        break;
+                    }
+                }
+                Debug.Log(selected_enemies[iter].display_name);
+                cm.changeColor(colorindex);
+            }
+            //      NEEDS RANDOM UPGRADES ON ENEMIES         //Need to be randomized   could be done at spawn
+            if (cm._supportsWheel)
+            { cm.changeWheels(0); }
+            if (cm._supportsSpoilers)
+                cm.changeSpoilers(0);
+            if (cm._supportsSuspensions)
+                cm.changeSuspensions(0);
+            if (cm._supportsMotors)
+                cm.changeMotor(0);
+            
+            iter++;
+        }
+
         cars = GetComponentsInChildren<CarController>();
+
         Debug.Log("CAR" + cars.Length + ": VEHICLES : " + totalVehicles);
-        if (raceType == RaceType.Elimination)
+        if (raceType == RaceData.RaceType.Elimination)
         {
             int elemenation_check = laps % (totalVehicles-1);
             if (elemenation_check == 0)
@@ -177,8 +281,26 @@ public class RaceManager : MonoBehaviour
             }
             
         }
-
     }
+    private List<T> Shuffle<T>(List<T> list)
+    {
+        System.Random rng = new System.Random();
+        List<T> shuffledList = new List<T>(list);
+        int n = shuffledList.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            T value = shuffledList[k];
+            shuffledList[k] = shuffledList[n];
+            shuffledList[n] = value;
+        }
+        return shuffledList;
+    }
+
+
+    //You can use this function by calling myList.Shuffle() on any instance of a List<T> that you want to shuffle, where T is the type of elements in the list. The function will shuffle the elements of the list randomly in place.
+
 
     private void Update()
     {
@@ -269,7 +391,7 @@ public class RaceManager : MonoBehaviour
         {
             timerLabel.text = string.Format("{0:00} : {1:00} : {2:00}", minutes, seconds, fraction);
             lapscounter.text = "Lap " + currentlap + " / " + laps;
-            if (raceType == RaceType.TimeTrial)
+            if (raceType == RaceData.RaceType.TimeTrail)
             {
                 if (secondsForTrial <= ((minutes * 60) + seconds))
                 {
@@ -292,8 +414,7 @@ public class RaceManager : MonoBehaviour
     }
     public void GoBack() 
     {
-
-        PlayerPrefs.SetInt("factor", 3);
+        
         StartCoroutine(waiter());
         
     }
@@ -318,8 +439,12 @@ public class RaceManager : MonoBehaviour
             {
                 if (wincount <= _winInTop)
                 {
-                    int money = PlayerPrefs.GetInt("money",0);
-                    PlayerPrefs.SetInt("money", money + ((opp+lap)*_awardFactor));
+                    PersonalSaver ps = SaveGame.Load<PersonalSaver>("player");
+                    int money = ps.cash;
+                    money = money + (int) Math.Round(((opp + lap) * _awardFactor));
+                    ps.cash = money;
+                    SaveGame.Save<PersonalSaver>("player", ps);
+
                     beeps[3].Stop();
                     beeps[4].PlayOneShot(winrace);
                     GoBack();
@@ -339,7 +464,7 @@ public class RaceManager : MonoBehaviour
 
                 currentlap = lap;
                 lapsLabel.text = timerLabel.text + "\n" + lapsLabel.text;
-                if (lap == laps && raceType!=RaceType.Elimination)
+                if (lap == laps && raceType!=RaceData.RaceType.Elimination)
                 {
                     //final lap
                     pausemusicbriefly(2.5f);
@@ -350,7 +475,7 @@ public class RaceManager : MonoBehaviour
                 }
             }
         }
-        if (raceType == RaceType.Elimination)
+        if (raceType == RaceData.RaceType.Elimination)
         {
             Debug.LogWarning("Breakpoint 1 : "+who.name);
             if (!passedCars.Contains(who.gameObject.GetComponent<CarController>()))

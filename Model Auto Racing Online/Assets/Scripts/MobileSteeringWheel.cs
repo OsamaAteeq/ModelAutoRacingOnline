@@ -7,7 +7,7 @@ using System.Collections;
 public class MobileSteeringWheel : MonoBehaviour
 {
     [SerializeField]
-    private MobileCarController mcc;
+    public MobileCarController mcc;
     public Graphic UI_Element;
 
     RectTransform rectT;

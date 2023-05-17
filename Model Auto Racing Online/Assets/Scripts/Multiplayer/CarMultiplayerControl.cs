@@ -1,12 +1,13 @@
 using System;
 using Unity.IO;
+using Unity.Netcode;
 using UnityEngine;
 using UnityStandardAssets.CrossPlatformInput;
 
 namespace UnityStandardAssets.Vehicles.Car
 {
     [RequireComponent(typeof(CarController))]
-    public class CarMultiplayerControl : MonoBehaviour
+    public class CarMultiplayerControl : NetworkBehaviour
     {
         internal enum InputType
         {
@@ -21,6 +22,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void Awake()
         {
+            if (!IsOwner) return;
             // get the car controller
             m_Car = GetComponent<CarController>();
             multi_Car = GetComponent<MultiplayerCarController>();
@@ -30,6 +32,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void FixedUpdate()
         {
+            if (!IsOwner) return;
             // pass the input to the car!
             if (inputType == InputType.Touch)
             {

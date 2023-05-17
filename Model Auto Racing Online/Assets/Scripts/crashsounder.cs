@@ -14,6 +14,13 @@ public class crashsounder : MonoBehaviour {
 
     void OnCollisionEnter(Collision collision)
     {
-        audio.PlayOneShot(crashSound);
+        if (audio != null)
+        {
+            audio.PlayOneShot(crashSound);
+        }
+        else 
+        {
+            audio = GetComponent<AudioSource>();
+        }
     }
 }

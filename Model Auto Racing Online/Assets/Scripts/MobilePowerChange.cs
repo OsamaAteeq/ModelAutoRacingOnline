@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class MobilePowerChange : MonoBehaviour
 {
     [SerializeField]
-    private MobileCarController mcc;
+    public MobileCarController mcc;
     private Slider slider; 
     private float default_slide;
     // Start is called before the first frame update

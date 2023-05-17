@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class MultiplayerCarController : MonoBehaviour
+public class MultiplayerCarController : NetworkBehaviour
 {
     public float myCarV = 0;
     public float myCarH = 0;

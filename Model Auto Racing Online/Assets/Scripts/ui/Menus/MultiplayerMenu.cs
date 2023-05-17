@@ -22,7 +22,7 @@ public class MultiplayerMenu : Menu
     [SerializeField] private List<TournamentData> _tournaments = new List<TournamentData>();
 
     [Header("Button Prefab :")]
-    [SerializeField] private Button _tournamentButton;
+    [ SerializeField] private Button _tournamentButton;
 
     private string money;
 
@@ -108,7 +108,7 @@ public class MultiplayerMenu : Menu
     {
         Debug.Log("NOT IMPLEMENTED YET");
     }
-    
+    //LobbyManager.Instance.Authenticate(EditPlayerName.Instance.GetPlayerName());
     #region Event Handler
 
     public void loadGameScene()

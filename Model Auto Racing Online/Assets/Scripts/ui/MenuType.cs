@@ -9,5 +9,8 @@
     Options,
     OfflineTournament,
     SingleplayerMaps,
-    Modification
+    Modification,
+    MultiplayerRace,
+    JoinMultiplayerRace,
+    HostMultiplayerRace
 }

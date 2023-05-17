@@ -15,9 +15,12 @@ public class carModifier : MonoBehaviour
     [SerializeField] public bool _supportsColor;
     [SerializeField] public ColorsList allSupportedColors;
     [SerializeField] private Material mainMaterial;
+    [SerializeField] private List<Renderer> mainRenderers;
     [SerializeField] private Material darkerMaterial;
+    [SerializeField] private List<Renderer> darkerRenderers;
     [SerializeField] private float darkFactor = 4;
     [SerializeField] private Material lighterMaterial;
+    [SerializeField] private List<Renderer> lighterRenderers;
     [SerializeField] private float lightFactor = 2;
 
     [Header("Spoilers :")]
@@ -56,6 +59,7 @@ public class carModifier : MonoBehaviour
 
     private void OnEnable()
     {
+
         cc = GetComponent<CarController>();
         old_WheelColliders = cc.m_WheelColliders;
         old_WheelMeshes = cc.m_WheelMeshes;
@@ -67,6 +71,7 @@ public class carModifier : MonoBehaviour
     {
         if (_supportsWheel)
         {
+            ParticleSystem skidParticles = old_WheelColliders[0].GetComponent<WheelEffects>().skidParticles;
             Data.Wheel toAttach = allSupportedWheels.wheels[i];
             int length = old_WheelMeshes.Length;
             for (int j = 0; j < length; j++)
@@ -117,7 +122,7 @@ public class carModifier : MonoBehaviour
 
                 //Destroy(old_WheelColliders[j].gameObject);
                 //old_WheelColliders[j].gameObject.SetActive(false);
-
+                old_WheelColliders[j].GetComponent<WheelEffects>().skidParticles = skidParticles;
                 Destroy(temp_collider.gameObject);
                 Destroy(temp_wheel);
 
@@ -206,21 +211,56 @@ public class carModifier : MonoBehaviour
     {
         if (_supportsColor)
         {
+            List<Material> mainMaterialInstances = new List<Material>();
+            List<Material> darkMaterialInstances = new List<Material>();
+            List<Material> lightMaterialInstances = new List<Material>();
+
             Color changeToColor = allSupportedColors.colors[i].color;
-            mainMaterial.color = changeToColor;
+            Color changeToDark = allSupportedColors.colors[i].color;
+            Color changeToLight = allSupportedColors.colors[i].color;
+
             float hue, saturation, value;
-            if (darkerMaterial != null) 
+
+            foreach (Renderer renderer in mainRenderers)
             {
-                Color.RGBToHSV(changeToColor, out hue, out saturation, out value);
-                changeToColor = Color.HSVToRGB(hue, saturation, value/darkFactor);
-                darkerMaterial.color = changeToColor;
+                Material materialInstance = new Material(renderer.material);
+                renderer.material = materialInstance;
+                mainMaterialInstances.Add(materialInstance);
             }
+            if (darkerMaterial != null)
+            {
+                foreach (Renderer renderer in darkerRenderers)
+                {
+                    Material materialInstance = new Material(renderer.material);
+                    renderer.material = materialInstance;
+                    darkMaterialInstances.Add(materialInstance);
+                }
+                Color.RGBToHSV(changeToColor, out hue, out saturation, out value);
+                changeToDark = Color.HSVToRGB(hue, saturation, value / darkFactor);
+            }
+
             if (lighterMaterial != null)
             {
+                foreach (Renderer renderer in lighterRenderers)
+                {
+                    Material materialInstance = new Material(renderer.material);
+                    renderer.material = materialInstance;
+                    lightMaterialInstances.Add(materialInstance);
+                }
                 Color.RGBToHSV(changeToColor, out hue, out saturation, out value);
-                changeToColor = Color.HSVToRGB(hue, saturation/lightFactor, value);
-                lighterMaterial.color = changeToColor;
+                changeToLight = Color.HSVToRGB(hue, saturation / lightFactor, value);
             }
+
+            if (mainMaterialInstances.Count > 0)
+                foreach (Material materialInstance in mainMaterialInstances)
+                    materialInstance.color = changeToColor;
+            if (darkMaterialInstances.Count > 0)
+                foreach (Material materialInstance in darkMaterialInstances)
+                    materialInstance.color = changeToDark;
+            if (lightMaterialInstances.Count > 0)
+                foreach (Material materialInstance in lightMaterialInstances)
+                    materialInstance.color = changeToLight;
+
 
             currentColorIndex = i;
         }
