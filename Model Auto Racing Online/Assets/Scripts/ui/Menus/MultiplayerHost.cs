@@ -10,6 +10,7 @@ using BayatGames.SaveGameFree;
 
 public class MultiplayerHost : MonoBehaviour
 {
+    public static MultiplayerHost Instance { get; private set; }
 
     [Header("Inherit References :")]
     [SerializeField] private Button _backButton;
@@ -74,11 +75,13 @@ public class MultiplayerHost : MonoBehaviour
 
     public void AwakeFunction()
     {
+        Instance = this;
         _createButton.onClick.AddListener(() => {
             LobbyManager.Instance.CreateLobby(
                 lobbyName,
                 (opp+1),
                 map,
+                scene_name,
                 isPrivate,
                 gameMode,
                 lap
@@ -209,7 +212,7 @@ public class MultiplayerHost : MonoBehaviour
         foreach (MapData md in maps)
         {
             if(!LobbyManager.Instance.HasMap(md.name))
-                LobbyManager.Instance.AddMap(md.name,md.max_laps);
+                LobbyManager.Instance.AddMap(md.name,md.max_laps,md.scene_name);
             if (md.name == selected_map.name)
             {
                 Debug.Log("FOUND"+md.name);
@@ -439,7 +442,7 @@ public class MultiplayerHost : MonoBehaviour
         race.is_race = true;
         race.setMultiplayer();
         SaveGame.Save<RaceSaver>("multiplayer_race", race);
-
+        Hide();
         //_menuManager.SwitchMenu(MenuType.JoinMultiplayerRace);
     }
 
@@ -583,6 +586,8 @@ public class MultiplayerHost : MonoBehaviour
     public void Show()
     {
         gameObject.SetActive(true);
+        this.AwakeFunction();
+
         this.StartFunction();
     }
 

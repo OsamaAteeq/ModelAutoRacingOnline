@@ -16,7 +16,6 @@ public class LobbyCreateUI : MonoBehaviour {
     [SerializeField] private TextMeshProUGUI lobbyNameText;
     [SerializeField] private TextMeshProUGUI publicPrivateText;
 
-    [SerializeField] private MultiplayerHost multiplayerHost;
 
 
     private string lobbyName;
@@ -26,10 +25,11 @@ public class LobbyCreateUI : MonoBehaviour {
         Instance = this;
 
         createButton.onClick.AddListener(() => {
-            multiplayerHost.LobbyName = lobbyName;
-            multiplayerHost.IsPrivate = isPrivate;
+            MultiplayerHost.Instance.LobbyName = lobbyName;
+            MultiplayerHost.Instance.IsPrivate = isPrivate;
             Hide();
-            multiplayerHost.Show();
+
+            MultiplayerHost.Instance.Show();
         });
 
         lobbyNameButton.onClick.AddListener(() => {

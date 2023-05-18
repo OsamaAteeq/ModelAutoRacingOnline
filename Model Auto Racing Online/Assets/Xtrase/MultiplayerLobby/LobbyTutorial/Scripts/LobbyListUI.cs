@@ -70,7 +70,7 @@ public class LobbyListUI : MonoBehaviour {
     }
 
     public void CreateLobbyButtonClick() {
-        
+        Hide();
         LobbyCreateUI.Instance.Show();
         _backButton.interactable = false;
     }

@@ -21,6 +21,7 @@ public class LobbyManager : MonoBehaviour {
 
     public const string KEY_PLAYER_NAME = "PlayerName";
     public const string KEY_MAP = "Map";
+    public const string KEY_SCENE_NAME = "Scene";
     public const string KEY_LAP = "Lap";
     public const string KEY_START_GAME = "0";
     
@@ -55,10 +56,13 @@ public class LobbyManager : MonoBehaviour {
     }
 
     private List<string> mapNames = new List<string>();
+
+    private List<string> sceneNames = new List<string>();
     private List<int> maxLaps = new List<int>();
 
-    public void AddMap(string map,int max_lap) 
+    public void AddMap(string map,int max_lap,string sceneName) 
     {
+        sceneNames.Add(sceneName);
         mapNames.Add(map);
         maxLaps.Add(max_lap);
     }
@@ -68,7 +72,8 @@ public class LobbyManager : MonoBehaviour {
     }
     public bool RemoveMap(string map)
     {
-        maxLaps.Remove(mapNames.IndexOf(map));
+        maxLaps.RemoveAt(mapNames.IndexOf(map));
+        sceneNames.RemoveAt(mapNames.IndexOf(map));
         return mapNames.Remove(map);
     }
 
@@ -139,6 +144,7 @@ public class LobbyManager : MonoBehaviour {
             RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
             NetworkManager.Singleton.StartHost();
+            NetworkManager.Singleton.SceneManager.LoadScene(joinedLobby.Data[KEY_SCENE_NAME].Value,UnityEngine.SceneManagement.LoadSceneMode.Additive);
 
             return joinCode;
         }
@@ -367,6 +373,7 @@ public class LobbyManager : MonoBehaviour {
         if (IsLobbyHost())
         {
             string map = joinedLobby.Data[KEY_MAP].Value;
+            string scene_name = joinedLobby.Data[KEY_SCENE_NAME].Value;
             int lap =
                Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
 
@@ -377,6 +384,7 @@ public class LobbyManager : MonoBehaviour {
                     if (i != (mapNames.Count - 1))
                     {
                         map = mapNames[i + 1];
+                        scene_name = sceneNames[i + 1];
                         if (lap > maxLaps[i + 1]) 
                         {
                             lap = maxLaps[i + 1];
@@ -385,6 +393,7 @@ public class LobbyManager : MonoBehaviour {
                     else 
                     {
                         map = mapNames[0];
+                        scene_name = sceneNames[0];
                         if (lap > maxLaps[0])
                         {
                             lap = maxLaps[0];
@@ -394,13 +403,13 @@ public class LobbyManager : MonoBehaviour {
                 }
             }
             UpdateLobbyLap("" + lap);
-            UpdateLobbyMap(map);
+            UpdateLobbyMap(map,scene_name);
         }
     }
 
     
 
-    public async void CreateLobby(string lobbyName, int maxPlayers, string map, bool isPrivate, GameMode gameMode, int lap) {
+    public async void CreateLobby(string lobbyName, int maxPlayers, string map, string scene_name, bool isPrivate, GameMode gameMode, int lap) {
         Player player = GetPlayer();
 
         CreateLobbyOptions options = new CreateLobbyOptions {
@@ -409,6 +418,7 @@ public class LobbyManager : MonoBehaviour {
             Data = new Dictionary<string, DataObject> {
                 { KEY_GAME_MODE, new DataObject(DataObject.VisibilityOptions.Public, gameMode.ToString()) },
                 { KEY_MAP, new DataObject(DataObject.VisibilityOptions.Public, map) },
+                { KEY_SCENE_NAME, new DataObject(DataObject.VisibilityOptions.Public, scene_name) },
                 { KEY_LAP, new DataObject(DataObject.VisibilityOptions.Public, ""+lap) },
                 { KEY_START_GAME, new DataObject(DataObject.VisibilityOptions.Member, "0")} 
             }
@@ -577,7 +587,7 @@ public class LobbyManager : MonoBehaviour {
             Debug.Log(e);
         }
     }
-    public async void UpdateLobbyMap(string map)
+    public async void UpdateLobbyMap(string map, string scene_name)
     {
         try
         {
@@ -586,7 +596,9 @@ public class LobbyManager : MonoBehaviour {
             Lobby lobby = await Lobbies.Instance.UpdateLobbyAsync(joinedLobby.Id, new UpdateLobbyOptions
             {
                 Data = new Dictionary<string, DataObject> {
-                    { KEY_MAP, new DataObject(DataObject.VisibilityOptions.Public, map) }
+                    { KEY_MAP, new DataObject(DataObject.VisibilityOptions.Public, map) },
+                    { KEY_SCENE_NAME, new DataObject(DataObject.VisibilityOptions.Public, scene_name) }
+                    
                 }
             });
 
