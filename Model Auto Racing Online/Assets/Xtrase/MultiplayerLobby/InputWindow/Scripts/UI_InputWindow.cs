@@ -27,7 +27,7 @@ public class UI_InputWindow : MonoBehaviour {
     private TextMeshProUGUI titleText;
     private TMP_InputField inputField;
 
-    private void Awake() {
+    public void AwakeFunction() {
         instance = this;
 
         okBtn = transform.Find("okBtn").GetComponent<Button_UI>();
@@ -38,14 +38,6 @@ public class UI_InputWindow : MonoBehaviour {
         Hide();
     }
 
-    private void Update() {
-        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) {
-            okBtn.ClickFunc();
-        }
-        if (Input.GetKeyDown(KeyCode.Escape)) {
-            cancelBtn.ClickFunc();
-        }
-    }
 
     private void Show(string titleString, string inputString, string validCharacters, int characterLimit, Action onCancel, Action<string> onOk) {
         gameObject.SetActive(true);

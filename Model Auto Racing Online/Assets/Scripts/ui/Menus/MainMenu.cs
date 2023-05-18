@@ -10,6 +10,7 @@ using CodeMonkey.Utils;
 
 public class MainMenu : Menu
 {
+    public event EventHandler OnNameChanged;
 
     [Header("Inherit References :")]
     [SerializeField] private Button _profileButton;
@@ -41,6 +42,7 @@ public class MainMenu : Menu
 
     private void Start()
     {
+        OnNameChanged += EditPlayerName_OnNameChanged;
         username = _profileButton.GetComponentInChildren<TextMeshProUGUI>().text;
         _usernamePanel.SetActive(false);
     }

@@ -8,12 +8,11 @@ using TMPro;
 using Data;
 using BayatGames.SaveGameFree;
 
-public class MultiplayerHostMenu : Menu
+public class MultiplayerHost : MonoBehaviour
 {
 
     [Header("Inherit References :")]
     [SerializeField] private Button _backButton;
-    [SerializeField] private Button _storeButton;
 
 
     //map
@@ -26,6 +25,8 @@ public class MultiplayerHostMenu : Menu
     private List<MapData> maps = new List<MapData>();
     //lap
     [Header("Lap :")]
+    [SerializeField] private Button _nextLapButton;
+    [SerializeField] private Button _previousLapButton;
     [SerializeField] private TextMeshProUGUI _lapText;
 
     //opponent
@@ -48,7 +49,7 @@ public class MultiplayerHostMenu : Menu
 
     //
     [Header("Major :")]
-    [SerializeField] private Button _raceButton;
+    [SerializeField] private Button _createButton;
 
 
     private string money;
@@ -59,15 +60,32 @@ public class MultiplayerHostMenu : Menu
     private string order;
     private string map;
     private MapSaver selected_map;
-    private int temp = 1;
     private string scene_name;
 
     private List<string> types = new List<string>();
     private List<string> orders = new List<string>();
 
+    private string lobbyName;
+    private bool isPrivate;
+    private LobbyManager.GameMode gameMode;
 
-    public void Start()
+    public string LobbyName { get => lobbyName; set => lobbyName = value; }
+    public bool IsPrivate { get => isPrivate; set => isPrivate = value; }
+
+    public void AwakeFunction()
     {
+        _createButton.onClick.AddListener(() => {
+            LobbyManager.Instance.CreateLobby(
+                lobbyName,
+                (opp+1),
+                map,
+                isPrivate,
+                gameMode,
+                lap
+            );
+            Hide();
+        });
+
         maps = mapsList.maps;
         RaceData.RaceType[] raceTypes = (RaceData.RaceType[])System.Enum.GetValues(typeof(RaceData.RaceType));
         RaceData.RaceDifficulty[] raceDifficulties = (RaceData.RaceDifficulty[])System.Enum.GetValues(typeof(RaceData.RaceDifficulty));
@@ -78,8 +96,6 @@ public class MultiplayerHostMenu : Menu
                 types.Add("Elim");
             else if (raceTypes[i] == RaceData.RaceType.Race)
                 types.Add("Race");
-            else if (raceTypes[i] == RaceData.RaceType.TimeTrail)
-                types.Add("Time");
         }
         for (int i = 0; i < raceOrders.Length; i++)
         {
@@ -90,17 +106,15 @@ public class MultiplayerHostMenu : Menu
         }
     }
 
-    override
-    public void SetEnable(int value)
+    public void StartFunction()
     {
-
+        SaveGame.Delete("current_race");
         PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
         PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
         money = "" + player.cash;
-        _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
-        if (SaveGame.Exists("current_race"))
+        if (SaveGame.Exists("multiplayer_race"))
         {
-            race = SaveGame.Load<RaceSaver>("current_race");
+            race = SaveGame.Load<RaceSaver>("multiplayer_race");
             race.setMultiplayer();
         }
         else
@@ -122,10 +136,11 @@ public class MultiplayerHostMenu : Menu
                 opponents_to_default = 1;
             }
             Debug.Log("mp.scene_name : " + mp.scene_name);
-            race = new RaceSaver(mp, laps_to_default, opponents_to_default, true, RaceData.RaceType.Race, RaceData.RaceOrder.Straight, RaceData.RaceDifficulty.Hard, 3f, 0);
+            race = new RaceSaver(mp, laps_to_default, opponents_to_default, true, RaceData.RaceType.Race, RaceData.RaceOrder.Straight, RaceData.RaceDifficulty.Hard, 0f, 0);
             selected_map = mp;
+            race.setMultiplayer();
             Debug.Log("selected_map.scene_name : " + selected_map.scene_name);
-            SaveGame.Save<RaceSaver>("current_race", race);
+            SaveGame.Save<RaceSaver>("multiplayer_race", race);
         }
         race.income_factor = 0;
         Debug.Log("TYPE : " + race.type);
@@ -136,11 +151,14 @@ public class MultiplayerHostMenu : Menu
         Debug.Log("IncomeFactor : " + race.income_factor);
         Debug.Log("Oppp : " + race.opponent);
         Debug.Log("STANDINGS : " + race.standings);
-       
+
+        lap = race.lap;
+        _lapText.text = "" + lap;
+
         String temp_string = "";
 
         opp = race.opponent;
-        temp_string = "" + opp;
+        temp_string = "" + (opp+1);
 
         _opponentText.text = temp_string;
 
@@ -148,15 +166,18 @@ public class MultiplayerHostMenu : Menu
         {
             case RaceData.RaceType.Race:
                 type = "Race";
-                break;
-            case RaceData.RaceType.TimeTrail:
-                type = "Time";
+
+                gameMode = LobbyManager.GameMode.Race;
                 break;
             case RaceData.RaceType.Elimination:
                 type = "Elim";
+
+                gameMode = LobbyManager.GameMode.Elimination;
                 break;
             default:
                 type = "Race";
+
+                gameMode = LobbyManager.GameMode.Race;
                 break;
 
         }
@@ -181,14 +202,14 @@ public class MultiplayerHostMenu : Menu
         race.setMapName();
         selected_map = race.map;
 
-        lap = selected_map.max_laps;
-        _lapText.text = "" + lap;
-        race.lap = lap;
+        
 
         selected_map.name = map = race.MapName;
         Debug.Log(race.MapName);
         foreach (MapData md in maps)
         {
+            if(!LobbyManager.Instance.HasMap(md.name))
+                LobbyManager.Instance.AddMap(md.name,md.max_laps);
             if (md.name == selected_map.name)
             {
                 Debug.Log("FOUND"+md.name);
@@ -220,14 +241,13 @@ public class MultiplayerHostMenu : Menu
 
         if ((selected_map.max_opponents < opp) && !SaveGame.Exists("current_tournament"))
         {
-            opp = selected_map.max_opponents;
-            _opponentText.text = "" + opp;
+            opp = (selected_map.max_opponents);
+            _opponentText.text = "" + (opp+1);
             race.opponent = opp;
-            SaveGame.Save<RaceSaver>("current_race", race);
+            SaveGame.Save<RaceSaver>("multiplayer_race", race);
         }
 
-        SaveGame.Save<RaceSaver>("current_race", race);
-        base.SetEnable(value);
+        SaveGame.Save<RaceSaver>("multiplayer_race", race);
         /*
         Debug.Log("TYPE : " + race.type);
         Debug.Log("diff : " + race.difficulty);
@@ -286,20 +306,22 @@ public class MultiplayerHostMenu : Menu
                 race.map = selected_map;
                 _mapText.text = map;
 
+                
                 if (selected_map.max_laps < lap)
                 {
                     lap = selected_map.max_laps;
                     _lapText.text = "" + lap;
                     race.lap = lap;
                 }
+
                 if (selected_map.max_opponents < opp)
                 {
                     opp = selected_map.max_opponents;
-                    _opponentText.text = "" + opp;
+                    _opponentText.text = "" + (opp+1);
                     race.opponent = opp;
                 }
 
-                SaveGame.Save<RaceSaver>("current_race", race);
+                SaveGame.Save<RaceSaver>("multiplayer_race", race);
                 break;
             }
         }
@@ -351,32 +373,74 @@ public class MultiplayerHostMenu : Menu
                     _lapText.text = "" + lap;
                     race.lap = lap;
                 }
+
                 if (selected_map.max_opponents < opp)
                 {
                     opp = selected_map.max_opponents;
-                    _opponentText.text = "" + opp;
+                    _opponentText.text = "" + (opp+1);
                     race.opponent = opp;
                 }
 
-                SaveGame.Save<RaceSaver>("current_race", race);
+                SaveGame.Save<RaceSaver>("multiplayer_race", race);
                 break;
             }
         }
     }
 
-    public void HandleFreeRoamButtonPressed()
+    public void HandlePreviousLapButtonPressed()
     {
-        race.is_race = false;
-        SaveGame.Save<RaceSaver>("current_race", race);
-        LoadLevel();
+        if (lap > 1)
+        {
+            lap--;
+            race.lap = lap;
+            SaveGame.Save<RaceSaver>("current_race", race);
+            _lapText.text = "" + lap;
+        }
+
+        checkLap();
+    }
+
+    public void HandleNextLapButtonPressed()
+    {
+        if (type == "Elim" && opp == lap) { }
+        else if (lap < selected_map.max_laps)
+        {
+            lap++;
+            race.lap = lap;
+            SaveGame.Save<RaceSaver>("current_race", race);
+            _lapText.text = "" + lap;
+        }
+        checkLap();
+    }
+
+    private void checkLap()
+    {
+        if (type == "Elim" && lap > opp)
+        {
+            lap = opp;
+            race.lap = lap;
+            SaveGame.Save<RaceSaver>("current_race", race);
+            _lapText.text = "" + lap;
+        }
+    }
+    private void checkOpp()
+    {
+        if (type == "Elim" && lap > opp)
+        {
+            opp = lap;
+            race.opponent = opp;
+            SaveGame.Save<RaceSaver>("current_race", race);
+            _opponentText.text = "" + (opp+1);
+        }
     }
 
     public void HandleRaceButtonPressed()
     {
         race.is_race = true;
         race.setMultiplayer();
-        SaveGame.Save<RaceSaver>("current_race", race);
-        LoadLevel();
+        SaveGame.Save<RaceSaver>("multiplayer_race", race);
+
+        //_menuManager.SwitchMenu(MenuType.JoinMultiplayerRace);
     }
 
     private void LoadLevel()
@@ -417,45 +481,25 @@ public class MultiplayerHostMenu : Menu
                 {
                     case "Elim":
                         selected_type = RaceData.RaceType.Elimination;
-                        break;
-                    case "Time":
-                        selected_type = RaceData.RaceType.TimeTrail;
+
+                        gameMode = LobbyManager.GameMode.Elimination;
                         break;
                     case "Race":
                         selected_type = RaceData.RaceType.Race;
+
+                        gameMode = LobbyManager.GameMode.Race;
                         break;
                     default:
                         selected_type = RaceData.RaceType.Race;
+
+                        gameMode = LobbyManager.GameMode.Race;
                         break;
                 }
                 race.type = selected_type;
                 _typeText.text = type;
 
-                if (type == "Time")
-                {
-                    temp = opp;
-                    opp = 0;
-                    race.opponent = opp;
-                    _opponentText.text = "0";
-
-                    _nextOppButton.interactable = false;
-                    _previousOppButton.interactable = false;
-                }
-                else if (opp == 0)
-                {
-                    opp = temp;
-                    race.opponent = opp;
-                    _opponentText.text = "" + opp;
-
-                    _nextOppButton.interactable = true;
-                    _previousOppButton.interactable = true;
-                }
-                if (type == "Elim" && lap > opp)
-                {
-                    lap = opp;
-                    _lapText.text = "" + lap;
-                }
-                SaveGame.Save<RaceSaver>("current_race", race);
+                checkLap();
+                SaveGame.Save<RaceSaver>("multiplayer_race", race);
                 break;
             }
         }
@@ -481,44 +525,25 @@ public class MultiplayerHostMenu : Menu
                 {
                     case "Elim":
                         selected_type = RaceData.RaceType.Elimination;
-                        break;
-                    case "Time":
-                        selected_type = RaceData.RaceType.TimeTrail;
+
+                        gameMode = LobbyManager.GameMode.Elimination;
                         break;
                     case "Race":
                         selected_type = RaceData.RaceType.Race;
+
+                        gameMode = LobbyManager.GameMode.Race;
                         break;
                     default:
                         selected_type = RaceData.RaceType.Race;
+
+                        gameMode = LobbyManager.GameMode.Race;
                         break;
                 }
                 race.type = selected_type;
                 _typeText.text = type;
-                if (type == "Time")
-                {
-                    temp = opp;
-                    opp = 0;
-                    race.opponent = opp;
-                    _opponentText.text = "0";
 
-                    _nextOppButton.interactable = false;
-                    _previousOppButton.interactable = false;
-                }
-                else if (opp == 0)
-                {
-                    opp = temp;
-                    race.opponent = opp;
-                    _opponentText.text = "" + opp;
-
-                    _nextOppButton.interactable = true;
-                    _previousOppButton.interactable = true;
-                }
-                if (type == "Elim" && lap > opp)
-                {
-                    lap = opp;
-                    _lapText.text = "" + lap;
-                }
-                SaveGame.Save<RaceSaver>("current_race", race);
+                checkLap();
+                SaveGame.Save<RaceSaver>("multiplayer_race", race);
                 break;
             }
         }
@@ -530,9 +555,10 @@ public class MultiplayerHostMenu : Menu
         {
             opp--;
             race.opponent = opp;
-            SaveGame.Save<RaceSaver>("current_race", race);
-            _opponentText.text = "" + opp;
+            SaveGame.Save<RaceSaver>("multiplayer_race", race);
+            _opponentText.text = "" + (opp+1);
         }
+
         checkOpp();
     }
 
@@ -542,56 +568,22 @@ public class MultiplayerHostMenu : Menu
         {
             opp++;
             race.opponent = opp;
-            SaveGame.Save<RaceSaver>("current_race", race);
-            _opponentText.text = "" + opp;
+            SaveGame.Save<RaceSaver>("multiplayer_race", race);
+            _opponentText.text = "" + (opp+1);
         }
+
         checkOpp();
     }
 
-    public void HandlePreviousLapButtonPressed()
+    private void Hide()
     {
-        if (lap > 1)
-        {
-            lap--;
-            race.lap = lap;
-            SaveGame.Save<RaceSaver>("current_race", race);
-            _lapText.text = "" + lap;
-        }
-        checkLap();
+        gameObject.SetActive(false);
     }
 
-    public void HandleNextLapButtonPressed()
+    public void Show()
     {
-        if (type == "Elim" && opp == lap) { }
-        else if (lap < selected_map.max_laps)
-        {
-            lap++;
-            race.lap = lap;
-            SaveGame.Save<RaceSaver>("current_race", race);
-            _lapText.text = "" + lap;
-        }
-        checkLap();
-    }
-
-    private void checkLap() 
-    {
-        if (type == "Elim" && lap>opp) 
-        {
-            lap = opp;
-            race.lap = lap;
-            SaveGame.Save<RaceSaver>("current_race", race);
-            _lapText.text = "" + lap;
-        }
-    }
-    private void checkOpp()
-    {
-        if (type == "Elim" && lap > opp)
-        {
-            opp = lap;
-            race.opponent = opp;
-            SaveGame.Save<RaceSaver>("current_race", race);
-            _opponentText.text = "" + opp;
-        }
+        gameObject.SetActive(true);
+        this.StartFunction();
     }
 
     public void HandleStoreButtonPressed()
@@ -603,8 +595,8 @@ public class MultiplayerHostMenu : Menu
     {
 
         SaveGame.Delete("current_tournament");
-        SaveGame.Save<RaceSaver>("current_race", race);
-        _menuManager.SwitchMenu(MenuType.Singleplayer);
+        SaveGame.Save<RaceSaver>("multiplayer_race", race);
+        //_menuManager.SwitchMenu(MenuType.MultiplayerRace);
         /*_menuManager.CloseMenu();
         _menuManager.SwitchMenu(MenuType.Level);
         */

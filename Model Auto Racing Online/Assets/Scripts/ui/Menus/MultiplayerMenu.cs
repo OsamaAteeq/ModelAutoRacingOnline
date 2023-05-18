@@ -98,6 +98,8 @@ public class MultiplayerMenu : Menu
 
     public void HandleRaceButtonPressed()
     {
+
+        _menuManager.SwitchMenu(MenuType.MultiplayerCompleteMenu);
         Debug.Log("NOT IMPLEMENTED YET");
     }
     public void HandleStoreButtonPressed()

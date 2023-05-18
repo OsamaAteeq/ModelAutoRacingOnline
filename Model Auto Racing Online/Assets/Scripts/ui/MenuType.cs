@@ -12,5 +12,6 @@
     Modification,
     MultiplayerRace,
     JoinMultiplayerRace,
-    HostMultiplayerRace
+    HostMultiplayerRace,
+    MultiplayerCompleteMenu
 }

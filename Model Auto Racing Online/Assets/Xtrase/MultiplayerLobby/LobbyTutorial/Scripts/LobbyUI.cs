@@ -17,41 +17,53 @@ public class LobbyUI : MonoBehaviour {
     [SerializeField] private TextMeshProUGUI lobbyNameText;
     [SerializeField] private TextMeshProUGUI playerCountText;
     [SerializeField] private TextMeshProUGUI gameModeText;
-    [SerializeField] private Button changeMarineButton;
-    [SerializeField] private Button changeNinjaButton;
-    [SerializeField] private Button changeZombieButton;
+
+    [SerializeField] private TextMeshProUGUI lapSettingText;
+    [SerializeField] private Button goButton;
+
+    [SerializeField] private TextMeshProUGUI lapText;
+    [SerializeField] private TextMeshProUGUI mapText;
     [SerializeField] private Button leaveLobbyButton;
     [SerializeField] private Button changeGameModeButton;
 
+    [SerializeField] private Button increaseLapButton;
+    [SerializeField] private Button decreaseLapButton;
+    [SerializeField] private Button changeMapButton;
 
-    private void Awake() {
+    [SerializeField] private Button _backButton;
+
+
+    public void AwakeFunction() {
         Instance = this;
 
         playerSingleTemplate.gameObject.SetActive(false);
 
-        changeMarineButton.onClick.AddListener(() => {
-            LobbyManager.Instance.UpdatePlayerCharacter(LobbyManager.PlayerCharacter.Marine);
-        });
-        changeNinjaButton.onClick.AddListener(() => {
-            LobbyManager.Instance.UpdatePlayerCharacter(LobbyManager.PlayerCharacter.Ninja);
-        });
-        changeZombieButton.onClick.AddListener(() => {
-            LobbyManager.Instance.UpdatePlayerCharacter(LobbyManager.PlayerCharacter.Zombie);
-        });
 
         leaveLobbyButton.onClick.AddListener(() => {
             LobbyManager.Instance.LeaveLobby();
+            _backButton.interactable = true;
         });
 
         changeGameModeButton.onClick.AddListener(() => {
             LobbyManager.Instance.ChangeGameMode();
         });
+        increaseLapButton.onClick.AddListener(() => {
+            LobbyManager.Instance.IncreaseLap();
+        });
+        decreaseLapButton.onClick.AddListener(() => {
+            LobbyManager.Instance.DecreaseLap();
+        }); 
+        changeMapButton.onClick.AddListener(() => {
+            LobbyManager.Instance.ChangeMap();
+        });
     }
 
-    private void Start() {
+    public void StartFunction() {
         LobbyManager.Instance.OnJoinedLobby += UpdateLobby_Event;
         LobbyManager.Instance.OnJoinedLobbyUpdate += UpdateLobby_Event;
         LobbyManager.Instance.OnLobbyGameModeChanged += UpdateLobby_Event;
+        LobbyManager.Instance.OnLobbyMapChanged += UpdateLobby_Event;
+        LobbyManager.Instance.OnLobbyLapChanged += UpdateLobby_Event;
         LobbyManager.Instance.OnLeftLobby += LobbyManager_OnLeftLobby;
         LobbyManager.Instance.OnKickedFromLobby += LobbyManager_OnLeftLobby;
 
@@ -85,13 +97,25 @@ public class LobbyUI : MonoBehaviour {
             );
 
             lobbyPlayerSingleUI.UpdatePlayer(player);
+            Rect r = lobbyPlayerSingleUI.GetComponent<RectTransform>().rect;
+            r.width = Screen.width;
         }
 
         changeGameModeButton.gameObject.SetActive(LobbyManager.Instance.IsLobbyHost());
 
+        changeMapButton.gameObject.SetActive(LobbyManager.Instance.IsLobbyHost());
+        increaseLapButton.gameObject.SetActive(LobbyManager.Instance.IsLobbyHost());
+
+        decreaseLapButton.gameObject.SetActive(LobbyManager.Instance.IsLobbyHost());
+        goButton.gameObject.SetActive(LobbyManager.Instance.isStartable());
+        lapSettingText.gameObject.SetActive(LobbyManager.Instance.IsLobbyHost());
+
         lobbyNameText.text = lobby.Name;
         playerCountText.text = lobby.Players.Count + "/" + lobby.MaxPlayers;
         gameModeText.text = lobby.Data[LobbyManager.KEY_GAME_MODE].Value;
+        mapText.text = lobby.Data[LobbyManager.KEY_MAP].Value;
+
+        lapText.text = "Laps: "+lobby.Data[LobbyManager.KEY_LAP].Value;
 
         Show();
     }

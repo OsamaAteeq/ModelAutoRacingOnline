@@ -1,3 +1,5 @@
+using BayatGames.SaveGameFree;
+using Data;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,14 +19,15 @@ public class EditPlayerName : MonoBehaviour {
     [SerializeField] private TextMeshProUGUI playerNameText;
 
 
-    private string playerName = "Code Monkey";
+    private string playerName = "UserName";
 
 
-    private void Awake() {
+    public void AwakeFunction() {
         Instance = this;
-
+        PersonalSaver player = SaveGame.Load<PersonalSaver>("player");
+        playerName = player.display_name;
         GetComponent<Button>().onClick.AddListener(() => {
-            UI_InputWindow.Show_Static("Player Name", playerName, "abcdefghijklmnopqrstuvxywzABCDEFGHIJKLMNOPQRSTUVXYWZ .,-", 20,
+            UI_InputWindow.Show_Static("Player Name", playerName, "abcdefghijklmnopqrstuvxywzABCDEFGHIJKLMNOPQRSTUVXYWZ .,-", 10,
             () => {
                 // Cancel
             },
@@ -40,11 +43,11 @@ public class EditPlayerName : MonoBehaviour {
         playerNameText.text = playerName;
     }
 
-    private void Start() {
+    public void StartFunction() {
         OnNameChanged += EditPlayerName_OnNameChanged;
     }
 
-    private void EditPlayerName_OnNameChanged(object sender, EventArgs e) {
+    public void EditPlayerName_OnNameChanged(object sender, EventArgs e) {
         LobbyManager.Instance.UpdatePlayerName(GetPlayerName());
     }
 

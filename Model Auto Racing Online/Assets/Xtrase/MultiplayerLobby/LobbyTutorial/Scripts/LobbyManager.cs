@@ -5,6 +5,8 @@ using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
 using UnityEngine;
 
 public class LobbyManager : MonoBehaviour {
@@ -14,7 +16,9 @@ public class LobbyManager : MonoBehaviour {
 
 
     public const string KEY_PLAYER_NAME = "PlayerName";
-    public const string KEY_PLAYER_CHARACTER = "Character";
+    public const string KEY_MAP = "Map";
+    public const string KEY_LAP = "Lap";
+    //public const string KEY_PLAYER_CHARACTER = "Character";
     public const string KEY_GAME_MODE = "GameMode";
 
 
@@ -25,6 +29,9 @@ public class LobbyManager : MonoBehaviour {
     public event EventHandler<LobbyEventArgs> OnJoinedLobbyUpdate;
     public event EventHandler<LobbyEventArgs> OnKickedFromLobby;
     public event EventHandler<LobbyEventArgs> OnLobbyGameModeChanged;
+
+    public event EventHandler<LobbyEventArgs> OnLobbyLapChanged;
+    public event EventHandler<LobbyEventArgs> OnLobbyMapChanged;
     public class LobbyEventArgs : EventArgs {
         public Lobby lobby;
     }
@@ -36,14 +43,26 @@ public class LobbyManager : MonoBehaviour {
 
 
     public enum GameMode {
-        CaptureTheFlag,
-        Conquest
+        Race,
+        Elimination
     }
 
-    public enum PlayerCharacter {
-        Marine,
-        Ninja,
-        Zombie
+    private List<string> mapNames = new List<string>();
+    private List<int> maxLaps = new List<int>();
+
+    public void AddMap(string map,int max_lap) 
+    {
+        mapNames.Add(map);
+        maxLaps.Add(max_lap);
+    }
+    public bool HasMap(string map)
+    {
+        return mapNames.Contains(map);
+    }
+    public bool RemoveMap(string map)
+    {
+        maxLaps.Remove(mapNames.IndexOf(map));
+        return mapNames.Remove(map);
     }
 
 
@@ -80,6 +99,38 @@ public class LobbyManager : MonoBehaviour {
         };
 
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
+    }
+    //RELAY
+    public async void CreateRelay() 
+    {
+        try
+        {
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(9);
+            await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+        }
+        catch (RelayServiceException e) 
+        {
+            Debug.LogWarning(e);
+        }
+    }
+
+    public async void JoinRelay(string code) 
+    {
+        try
+        {
+            await RelayService.Instance.JoinAllocationAsync(code);
+        }
+        catch (RelayServiceException e) 
+        {
+            Debug.LogWarning(e);
+        }
+    }
+    //RELAY
+
+    public async void DeAuthenticate()
+    {
+        Debug.Log("SIGNED OUT : "+AuthenticationService.Instance.PlayerId);
+        await AuthenticationService.Instance.DeleteAccountAsync();
     }
 
     private void HandleRefreshLobbyList() {
@@ -153,37 +204,157 @@ public class LobbyManager : MonoBehaviour {
     private Player GetPlayer() {
         return new Player(AuthenticationService.Instance.PlayerId, null, new Dictionary<string, PlayerDataObject> {
             { KEY_PLAYER_NAME, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, playerName) },
-            { KEY_PLAYER_CHARACTER, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, PlayerCharacter.Marine.ToString()) }
+            //{ KEY_PLAYER_CHARACTER, new PlayerDataObject(PlayerDataObject.VisibilityOptions.Public, PlayerCharacter.Marine.ToString()) }
         });
     }
 
     public void ChangeGameMode() {
         if (IsLobbyHost()) {
+            int lap =
+              Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
             GameMode gameMode =
                 Enum.Parse<GameMode>(joinedLobby.Data[KEY_GAME_MODE].Value);
 
             switch (gameMode) {
                 default:
-                case GameMode.CaptureTheFlag:
-                    gameMode = GameMode.Conquest;
+                case GameMode.Elimination:
+                    gameMode = GameMode.Race;
                     break;
-                case GameMode.Conquest:
-                    gameMode = GameMode.CaptureTheFlag;
+                case GameMode.Race:
+                    gameMode = GameMode.Elimination;
                     break;
+            }
+            if (gameMode == GameMode.Elimination && lap > joinedLobby.MaxPlayers) 
+            {
+                lap = joinedLobby.MaxPlayers;
             }
 
             UpdateLobbyGameMode(gameMode);
+            UpdateLobbyLap("" + lap);
         }
     }
 
-    public async void CreateLobby(string lobbyName, int maxPlayers, bool isPrivate, GameMode gameMode) {
+    public void IncreaseLap()
+    {
+        if (IsLobbyHost())
+        {
+            GameMode gameMode =
+                Enum.Parse<GameMode>(joinedLobby.Data[KEY_GAME_MODE].Value);
+            int lap =
+               Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
+            string map = joinedLobby.Data[KEY_MAP].Value;
+            int index = 0;
+            for (int i = 0; i < maxLaps.Count; i++)
+            {
+                if (map == mapNames[i])
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (lap < maxLaps[index])
+            {
+                if (gameMode == GameMode.Elimination && lap == joinedLobby.MaxPlayers)
+                { }
+                else
+                {
+                    lap = lap + 1;
+                }
+            }
+            UpdateLobbyLap("" + lap);
+        }
+    }
+
+    public bool isStartable()
+    {
+        if (IsLobbyHost())
+        {
+            bool check1 = false;
+            bool check2 = false;
+            int count = joinedLobby.Players.Count;
+            int lap =
+                   Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
+            GameMode gameMode =
+                    Enum.Parse<GameMode>(joinedLobby.Data[KEY_GAME_MODE].Value);
+            if (gameMode == GameMode.Elimination && (count >= 2))
+            {
+                if (count > lap)
+                    check1 = true;
+            }
+            else if (count >= 2)
+            {
+                check2 = true;
+            }
+
+            return (check1 && check2);
+        }
+        return false;
+    }
+
+    public void DecreaseLap()
+    {
+        if (IsLobbyHost())
+        {
+            int lap =
+               Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
+            if (lap > 1)
+            {
+                lap = lap - 1;
+            }
+
+            UpdateLobbyLap("" + lap);
+
+        }
+    }
+
+    public void ChangeMap()
+    {
+        if (IsLobbyHost())
+        {
+            string map = joinedLobby.Data[KEY_MAP].Value;
+            int lap =
+               Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
+
+            for (int i = 0; i < mapNames.Count; i++)
+            {
+                if (mapNames[i] == map)
+                {
+                    if (i != (mapNames.Count - 1))
+                    {
+                        map = mapNames[i + 1];
+                        if (lap > maxLaps[i + 1]) 
+                        {
+                            lap = maxLaps[i + 1];
+                        }
+                    }
+                    else 
+                    {
+                        map = mapNames[0];
+                        if (lap > maxLaps[0])
+                        {
+                            lap = maxLaps[0];
+                        }
+                    }
+                    break;
+                }
+            }
+            UpdateLobbyLap("" + lap);
+            UpdateLobbyMap(map);
+        }
+    }
+
+    
+
+    public async void CreateLobby(string lobbyName, int maxPlayers, string map, bool isPrivate, GameMode gameMode, int lap) {
         Player player = GetPlayer();
 
         CreateLobbyOptions options = new CreateLobbyOptions {
             Player = player,
             IsPrivate = isPrivate,
             Data = new Dictionary<string, DataObject> {
-                { KEY_GAME_MODE, new DataObject(DataObject.VisibilityOptions.Public, gameMode.ToString()) }
+                { KEY_GAME_MODE, new DataObject(DataObject.VisibilityOptions.Public, gameMode.ToString()) },
+                { KEY_MAP, new DataObject(DataObject.VisibilityOptions.Public, map) },
+                { KEY_LAP, new DataObject(DataObject.VisibilityOptions.Public, ""+lap) }
             }
         };
 
@@ -273,31 +444,7 @@ public class LobbyManager : MonoBehaviour {
         }
     }
 
-    public async void UpdatePlayerCharacter(PlayerCharacter playerCharacter) {
-        if (joinedLobby != null) {
-            try {
-                UpdatePlayerOptions options = new UpdatePlayerOptions();
-
-                options.Data = new Dictionary<string, PlayerDataObject>() {
-                    {
-                        KEY_PLAYER_CHARACTER, new PlayerDataObject(
-                            visibility: PlayerDataObject.VisibilityOptions.Public,
-                            value: playerCharacter.ToString())
-                    }
-                };
-
-                string playerId = AuthenticationService.Instance.PlayerId;
-
-                Lobby lobby = await LobbyService.Instance.UpdatePlayerAsync(joinedLobby.Id, playerId, options);
-                joinedLobby = lobby;
-
-                OnJoinedLobbyUpdate?.Invoke(this, new LobbyEventArgs { lobby = joinedLobby });
-            } catch (LobbyServiceException e) {
-                Debug.Log(e);
-            }
-        }
-    }
-
+    
     public async void QuickJoinLobby() {
         try {
             QuickJoinLobbyOptions options = new QuickJoinLobbyOptions();
@@ -349,6 +496,50 @@ public class LobbyManager : MonoBehaviour {
 
             OnLobbyGameModeChanged?.Invoke(this, new LobbyEventArgs { lobby = joinedLobby });
         } catch (LobbyServiceException e) {
+            Debug.Log(e);
+        }
+    }
+    public async void UpdateLobbyLap(string lap)
+    {
+        try
+        {
+            Debug.Log("UpdateLobbyLap " + lap);
+
+            Lobby lobby = await Lobbies.Instance.UpdateLobbyAsync(joinedLobby.Id, new UpdateLobbyOptions
+            {
+                Data = new Dictionary<string, DataObject> {
+                    { KEY_LAP, new DataObject(DataObject.VisibilityOptions.Public, ""+lap) }
+                }
+            });
+
+            joinedLobby = lobby;
+
+            OnLobbyLapChanged?.Invoke(this, new LobbyEventArgs { lobby = joinedLobby });
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.Log(e);
+        }
+    }
+    public async void UpdateLobbyMap(string map)
+    {
+        try
+        {
+            Debug.Log("UpdateLobbyMap " + map);
+
+            Lobby lobby = await Lobbies.Instance.UpdateLobbyAsync(joinedLobby.Id, new UpdateLobbyOptions
+            {
+                Data = new Dictionary<string, DataObject> {
+                    { KEY_MAP, new DataObject(DataObject.VisibilityOptions.Public, map) }
+                }
+            });
+
+            joinedLobby = lobby;
+
+            OnLobbyMapChanged?.Invoke(this, new LobbyEventArgs { lobby = joinedLobby });
+        }
+        catch (LobbyServiceException e)
+        {
             Debug.Log(e);
         }
     }

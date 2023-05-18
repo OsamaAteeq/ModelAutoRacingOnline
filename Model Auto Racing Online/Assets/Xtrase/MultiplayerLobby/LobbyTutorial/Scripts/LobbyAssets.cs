@@ -18,7 +18,7 @@ public class LobbyAssets : MonoBehaviour {
     private void Awake() {
         Instance = this;
     }
-
+    /*
     public Sprite GetSprite(LobbyManager.PlayerCharacter playerCharacter) {
         switch (playerCharacter) {
             default:
@@ -26,6 +26,6 @@ public class LobbyAssets : MonoBehaviour {
             case LobbyManager.PlayerCharacter.Ninja:    return ninjaSprite;
             case LobbyManager.PlayerCharacter.Zombie:   return zombieSprite;
         }
-    }
+    }*/
 
 }

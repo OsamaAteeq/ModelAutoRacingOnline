@@ -12,14 +12,20 @@ public class LobbyListSingleUI : MonoBehaviour {
     [SerializeField] private TextMeshProUGUI playersText;
     [SerializeField] private TextMeshProUGUI gameModeText;
 
+    [SerializeField] private TextMeshProUGUI lapText;
+    [SerializeField] private TextMeshProUGUI mapText;
+    [SerializeField] private Button _backButton;
+
 
     private Lobby lobby;
 
 
     private void Awake() {
         GetComponent<Button>().onClick.AddListener(() => {
+            _backButton.interactable = false;
             LobbyManager.Instance.JoinLobby(lobby);
         });
+
     }
 
     public void UpdateLobby(Lobby lobby) {
@@ -28,6 +34,9 @@ public class LobbyListSingleUI : MonoBehaviour {
         lobbyNameText.text = lobby.Name;
         playersText.text = lobby.Players.Count + "/" + lobby.MaxPlayers;
         gameModeText.text = lobby.Data[LobbyManager.KEY_GAME_MODE].Value;
+
+        lapText.text = lobby.Data[LobbyManager.KEY_LAP].Value;
+        mapText.text = lobby.Data[LobbyManager.KEY_MAP].Value;
     }
 
 
