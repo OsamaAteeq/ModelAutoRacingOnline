@@ -85,6 +85,11 @@ public class LobbyManager : MonoBehaviour {
             try { 
                 Debug.Log("START MULTIPLAYER");
                 string relayCode = await CreateRelay();
+
+
+
+                Debug.Log("Trying to load: " + joinedLobby.Data[KEY_SCENE_NAME].Value);
+                NetworkManager.Singleton.SceneManager.LoadScene(joinedLobby.Data[KEY_SCENE_NAME].Value, UnityEngine.SceneManagement.LoadSceneMode.Single);
                 Lobby lobby = await Lobbies.Instance.UpdateLobbyAsync(joinedLobby.Id, new UpdateLobbyOptions {
                     Data = new Dictionary<string, DataObject> {
                         {KEY_START_GAME, new DataObject(DataObject.VisibilityOptions.Member, relayCode) }
@@ -143,8 +148,8 @@ public class LobbyManager : MonoBehaviour {
             Debug.Log(joinCode);
             RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
+
             NetworkManager.Singleton.StartHost();
-            NetworkManager.Singleton.SceneManager.LoadScene(joinedLobby.Data[KEY_SCENE_NAME].Value,UnityEngine.SceneManagement.LoadSceneMode.Additive);
 
             return joinCode;
         }

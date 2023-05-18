@@ -9,6 +9,7 @@ namespace Data
         public Scale scale;
         public SurfaceTypes surface;
         public GameObject car;
+        public GameObject multiplayerCar;
     }
 }
 

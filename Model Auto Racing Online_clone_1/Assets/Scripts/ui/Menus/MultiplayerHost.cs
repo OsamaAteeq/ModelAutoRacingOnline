@@ -77,6 +77,7 @@ public class MultiplayerHost : MonoBehaviour
     {
         Instance = this;
         _createButton.onClick.AddListener(() => {
+            Debug.Log("Loby Created with " + scene_name);
             LobbyManager.Instance.CreateLobby(
                 lobbyName,
                 (opp+1),
@@ -211,13 +212,17 @@ public class MultiplayerHost : MonoBehaviour
         Debug.Log(race.MapName);
         foreach (MapData md in maps)
         {
-            if(!LobbyManager.Instance.HasMap(md.name))
-                LobbyManager.Instance.AddMap(md.name,md.max_laps,md.scene_name);
+            if (!LobbyManager.Instance.HasMap(md.name))
+            {
+                LobbyManager.Instance.AddMap(md.name, md.max_laps, md.scene_name);
+                Debug.Log(md.scene_name+" Scene named "+md.name+" HAS BEEN ADDED TO LOBBY LIST");
+            }
             if (md.name == selected_map.name)
             {
                 Debug.Log("FOUND"+md.name);
                 _mapText.text = race.map.name;
                 _mapImage.sprite = md.map_image;
+                scene_name = md.scene_name;
             }
         }
         
@@ -285,6 +290,7 @@ public class MultiplayerHost : MonoBehaviour
 
                     selected_map.name = maps[i - 1].name;
                     selected_map.scene_name = maps[i - 1].scene_name;
+                    scene_name = maps[i - 1].scene_name;
                     selected_map.max_laps = maps[i - 1].max_laps;
                     selected_map.max_opponents = maps[i - 1].max_opponents;
                     //selected_map.map_image = maps[i - 1].map_image;
@@ -300,6 +306,7 @@ public class MultiplayerHost : MonoBehaviour
 
                     selected_map.name = maps[maps.Count - 1].name;
                     selected_map.scene_name = maps[maps.Count - 1].scene_name;
+                    scene_name = maps[maps.Count - 1].scene_name;
                     selected_map.max_laps = maps[maps.Count - 1].max_laps;
                     selected_map.max_opponents = maps[maps.Count - 1].max_opponents;
                     //selected_map.map_image = maps[maps.Count - 1].map_image;
@@ -344,8 +351,10 @@ public class MultiplayerHost : MonoBehaviour
 
                     selected_map.name = maps[i + 1].name;
                     selected_map.scene_name = maps[i + 1].scene_name;
+                    scene_name = maps[i + 1].scene_name;
                     selected_map.max_laps = maps[i + 1].max_laps;
                     selected_map.max_opponents = maps[i + 1].max_opponents;
+
                     //selected_map.map_image = maps[i + 1].map_image;
 
                     selected_map.map_image = (maps[i + 1].map_image);
@@ -360,6 +369,7 @@ public class MultiplayerHost : MonoBehaviour
 
                     selected_map.name = maps[0].name;
                     selected_map.scene_name = maps[0].scene_name;
+                    scene_name = maps[0].scene_name;
                     selected_map.max_laps = maps[0].max_laps;
                     selected_map.max_opponents = maps[0].max_opponents;
                     //selected_map.map_image = maps[0].map_image;
@@ -586,7 +596,6 @@ public class MultiplayerHost : MonoBehaviour
     public void Show()
     {
         gameObject.SetActive(true);
-        this.AwakeFunction();
 
         this.StartFunction();
     }

@@ -10,6 +10,7 @@ using UnityStandardAssets.Utility;
 using UnityEngine.SceneManagement;
 using System.Collections;
 using BayatGames.SaveGameFree;
+using Unity.Netcode;
 
 public class RaceManager : MonoBehaviour
 {
@@ -110,6 +111,7 @@ public class RaceManager : MonoBehaviour
 
     private void Start()
     {
+        
         raceSaver = SaveGame.Load<RaceSaver>("current_race");
         if (SaveGame.Exists("current_tournament")) 
         {
