@@ -232,6 +232,8 @@ public class carModifier : MonoBehaviour
             List<Material> lightMaterialInstances = new List<Material>();
 
             Color changeToColor = allSupportedColors.colors[i].color;
+
+            Debug.Log("COLOR CHANGED TO : " + allSupportedColors.colors[i].name);
             Color changeToDark = allSupportedColors.colors[i].color;
             Color changeToLight = allSupportedColors.colors[i].color;
 
