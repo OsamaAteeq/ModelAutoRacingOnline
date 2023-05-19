@@ -76,6 +76,8 @@ public class MultiplayerHost : MonoBehaviour
     public void AwakeFunction()
     {
         Instance = this;
+        maps = mapsList.maps;
+
         _createButton.onClick.AddListener(() => {
             Debug.Log("Loby Created with " + scene_name);
             LobbyManager.Instance.CreateLobby(
@@ -90,7 +92,7 @@ public class MultiplayerHost : MonoBehaviour
             Hide();
         });
 
-        maps = mapsList.maps;
+        
         RaceData.RaceType[] raceTypes = (RaceData.RaceType[])System.Enum.GetValues(typeof(RaceData.RaceType));
         RaceData.RaceDifficulty[] raceDifficulties = (RaceData.RaceDifficulty[])System.Enum.GetValues(typeof(RaceData.RaceDifficulty));
         RaceData.RaceOrder[] raceOrders = (RaceData.RaceOrder[])System.Enum.GetValues(typeof(RaceData.RaceOrder));
@@ -116,36 +118,33 @@ public class MultiplayerHost : MonoBehaviour
         PersonalSaver temp = new PersonalSaver("0", "User Name", 0, new Color(255f / 255, 189f / 255, 0));
         PersonalSaver player = SaveGame.Load<PersonalSaver>("player", temp);
         money = "" + player.cash;
-        if (SaveGame.Exists("multiplayer_race"))
+        MapSaver mp = new MapSaver(maps[0].scene_name);
+        mp.name = maps[0].name;
+        mp.max_laps = maps[0].max_laps;
+        mp.max_opponents = maps[0].max_opponents;
+        //mp.map_image = maps[0].map_image;
+        mp.map_image = maps[0].map_image;
+        int laps_to_default = (int)Math.Floor((double)(mp.max_laps / 2)) - 1;
+        int opponents_to_default = (int)Math.Floor((double)(mp.max_opponents / 2)) - 1;
+        if (laps_to_default < 1)
         {
-            race = SaveGame.Load<RaceSaver>("multiplayer_race");
-            race.setMultiplayer();
+            laps_to_default = 1;
         }
-        else
+        if (opponents_to_default < 1)
         {
-            MapSaver mp = new MapSaver(maps[0].scene_name);
-            mp.name = maps[0].name;
-            mp.max_laps = maps[0].max_laps;
-            mp.max_opponents = maps[0].max_opponents;
-            //mp.map_image = maps[0].map_image;
-            mp.map_image = maps[0].map_image;
-            int laps_to_default = (int)Math.Floor((double)(mp.max_laps / 2)) - 1;
-            int opponents_to_default = (int)Math.Floor((double)(mp.max_opponents / 2)) - 1;
-            if (laps_to_default < 1)
-            {
-                laps_to_default = 1;
-            }
-            if (opponents_to_default < 1)
-            {
-                opponents_to_default = 1;
-            }
-            Debug.Log("mp.scene_name : " + mp.scene_name);
-            race = new RaceSaver(mp, laps_to_default, opponents_to_default, true, RaceData.RaceType.Race, RaceData.RaceOrder.Straight, RaceData.RaceDifficulty.Hard, 0f, 0);
-            selected_map = mp;
-            race.setMultiplayer();
-            Debug.Log("selected_map.scene_name : " + selected_map.scene_name);
-            SaveGame.Save<RaceSaver>("multiplayer_race", race);
+            opponents_to_default = 1;
         }
+        Debug.Log("mp.scene_name : " + mp.scene_name);
+        race = new RaceSaver(mp, laps_to_default, opponents_to_default, true, RaceData.RaceType.Race, RaceData.RaceOrder.Straight, RaceData.RaceDifficulty.Hard, 0f, 0);
+        selected_map = mp;
+        race.setMultiplayer();
+        Debug.Log("selected_map.scene_name : " + selected_map.scene_name);
+        SaveGame.Save<RaceSaver>("multiplayer_race", race);
+
+
+
+
+
         race.income_factor = 0;
         Debug.Log("TYPE : " + race.type);
         Debug.Log("diff : " + race.difficulty);
@@ -162,7 +161,7 @@ public class MultiplayerHost : MonoBehaviour
         String temp_string = "";
 
         opp = race.opponent;
-        temp_string = "" + (opp+1);
+        temp_string = "" + (opp + 1);
 
         _opponentText.text = temp_string;
 
@@ -206,7 +205,7 @@ public class MultiplayerHost : MonoBehaviour
         race.setMapName();
         selected_map = race.map;
 
-        
+
 
         selected_map.name = map = race.MapName;
         Debug.Log(race.MapName);
@@ -215,17 +214,17 @@ public class MultiplayerHost : MonoBehaviour
             if (!LobbyManager.Instance.HasMap(md.name))
             {
                 LobbyManager.Instance.AddMap(md.name, md.max_laps, md.scene_name);
-                Debug.Log(md.scene_name+" Scene named "+md.name+" HAS BEEN ADDED TO LOBBY LIST");
+                Debug.Log(md.scene_name + " Scene named " + md.name + " HAS BEEN ADDED TO LOBBY LIST");
             }
             if (md.name == selected_map.name)
             {
-                Debug.Log("FOUND"+md.name);
+                Debug.Log("FOUND" + md.name);
                 _mapText.text = race.map.name;
                 _mapImage.sprite = md.map_image;
                 scene_name = md.scene_name;
             }
         }
-        
+
 
         //Debug.Log("MAP : " + race.map.map_image);
         // Debug.Log("MAP : " + race.map.getImage());
@@ -250,7 +249,7 @@ public class MultiplayerHost : MonoBehaviour
         if ((selected_map.max_opponents < opp) && !SaveGame.Exists("current_tournament"))
         {
             opp = (selected_map.max_opponents);
-            _opponentText.text = "" + (opp+1);
+            _opponentText.text = "" + (opp + 1);
             race.opponent = opp;
             SaveGame.Save<RaceSaver>("multiplayer_race", race);
         }
@@ -449,8 +448,6 @@ public class MultiplayerHost : MonoBehaviour
 
     public void HandleRaceButtonPressed()
     {
-        race.is_race = true;
-        race.setMultiplayer();
         SaveGame.Save<RaceSaver>("multiplayer_race", race);
         Hide();
         //_menuManager.SwitchMenu(MenuType.JoinMultiplayerRace);
@@ -596,7 +593,6 @@ public class MultiplayerHost : MonoBehaviour
     public void Show()
     {
         gameObject.SetActive(true);
-
         this.StartFunction();
     }
 

@@ -102,7 +102,7 @@ public class SingleMapSelection : Menu
             else if (raceDifficulties[i] == RaceData.RaceDifficulty.Medium)
                 difficulties.Add("Med");
             else if (raceDifficulties[i] == RaceData.RaceDifficulty.Hard)
-                types.Add("Hard");
+                difficulties.Add("Hard");
         }
         for (int i = 0; i < raceOrders.Length; i++)
         {

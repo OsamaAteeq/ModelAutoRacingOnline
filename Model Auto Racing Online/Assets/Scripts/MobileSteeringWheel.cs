@@ -7,7 +7,10 @@ using System.Collections;
 public class MobileSteeringWheel : MonoBehaviour
 {
     [SerializeField]
-    public MobileCarController mcc;
+    public MobileCarController mcc = null;
+
+    [SerializeField]
+    public MultiplayerCarController mcc2 = null;
     public Graphic UI_Element;
 
     RectTransform rectT;
@@ -56,7 +59,10 @@ public class MobileSteeringWheel : MonoBehaviour
         
         // Rotate the wheel image
         rectT.localEulerAngles = Vector3.back * wheelAngle;
-        mcc.SetCarH(GetClampedValue());
+        if(mcc!=null)
+            mcc.SetCarH(GetClampedValue());
+        if (mcc2 != null)
+            mcc2.SetCarH(GetClampedValue());
 
         //Debug.Log("Steering Value: " + GetClampedValue());
     }

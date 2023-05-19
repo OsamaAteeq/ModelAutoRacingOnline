@@ -1,6 +1,7 @@
 ﻿using Data;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityStandardAssets;
@@ -57,14 +58,20 @@ public class carModifier : MonoBehaviour
     private int currentMotorIndex = 0;
     public int Motor { get => currentMotorIndex; }
 
+    private bool isMultiplayer;
     private void OnEnable()
     {
-
         cc = GetComponent<CarController>();
         old_WheelColliders = cc.m_WheelColliders;
         old_WheelMeshes = cc.m_WheelMeshes;
         old_WheelEffects = cc.m_WheelEffects;
-        
+
+        isMultiplayer = IsMultiplayer();
+    }
+
+    private bool IsMultiplayer()
+    {
+        return NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost;
     }
 
     public void changeWheels(int i)
@@ -93,6 +100,11 @@ public class carModifier : MonoBehaviour
                 {
                     old_WheelMeshes[j] = null;
                     Debug.LogError("Wheel Out of Bound");
+                }
+
+                if (isMultiplayer)
+                {
+                    old_WheelMeshes[j].GetComponent<NetworkObject>().Spawn(true);
                 }
 
                 old_WheelMeshes[j].transform.position = t.position;
@@ -179,6 +191,10 @@ public class carModifier : MonoBehaviour
             GameObject temp = _attachedSpoiler;
             Destroy(temp);
             _attachedSpoiler = Instantiate(toAttach.spoiler, t.parent.transform);
+            if (isMultiplayer)
+            {
+                _attachedSpoiler.GetComponent<NetworkObject>().Spawn(true);
+            }
             if (toAttach.isPainted)
             {
                 Material newMaterial = new Material(toAttach.paintedMaterial);

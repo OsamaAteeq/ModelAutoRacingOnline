@@ -108,12 +108,24 @@ public class RaceManager : MonoBehaviour
     private bool race;
     private int opp;
     private List<PersonalSaver> selected_enemies;
-
+    private void Awake()
+    {
+        if (IsMultiplayer())
+        {
+            // Disable the RaceManager if running in multiplayer mode
+            this.gameObject.SetActive(false);
+        }
+    }
+    private bool IsMultiplayer()
+    {
+        return NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost;
+    }
     private void Start()
     {
-        
+        Debug.Log("THIS RACE IS SINGLEPLAYER");
+
         raceSaver = SaveGame.Load<RaceSaver>("current_race");
-        if (SaveGame.Exists("current_tournament")) 
+        if (SaveGame.Exists("current_tournament"))
         {
             tournamentSaver = SaveGame.Load<TournamentSaver>("current_tournament");
         }
@@ -129,17 +141,16 @@ public class RaceManager : MonoBehaviour
         raceType = raceSaver.type;
         secondsForTrial = laps * _secondsForEachLap;
         opp = raceSaver.opponent;
-        
+
         Debug.Log("LAPS: " + laps + ": OPP : " + opp + " : Type : " + raceType + " : RACE : " + race);
 
         beeps = place.GetComponents<AudioSource>();
         beeps[4].PlayOneShot(racestart);
         cars = GetComponentsInChildren<CarController>();
-        int rand_player_index = (int) Math.Round((double)Random.Range(0, (cars.Length - 1)));
+        int rand_player_index = (int)Math.Round((double)Random.Range(0, (cars.Length - 1)));
 
         int size = cars.Length;
-        Color cc_color = new Color(.2f,.2f,.2f,1f);
-        for (int i = 0; i<size;i++)
+        for (int i = 0; i < size; i++)
         {
             CarController car = cars[i].GetComponent<CarController>();
             if (totalVehicles == rand_player_index)
@@ -155,32 +166,24 @@ public class RaceManager : MonoBehaviour
                 _originalCar.transform.position = t1.position;
                 _originalCar.transform.rotation = t1.rotation;
 
-                
+
 
                 carModifier a = car.GetComponent<carModifier>();
-                cc_color = car.color;
+
 
                 if (a._supportsWheel)
                     a.changeWheels(current_vehicle.wheelsIndex);
-                if (a._supportsColor)
-                {
-                    a.changeColor(current_vehicle.colorsIndex);
-                    cc_color = a.allSupportedColors.colors[current_vehicle.colorsIndex].color;
-                }
-                else 
-                {
-                    PersonalSaver ps = SaveGame.Load<PersonalSaver>("player");
-                    car.color = ps.color;
-                }
                 if (a._supportsSpoilers)
                     a.changeSpoilers(current_vehicle.spoilersIndex);
                 if (a._supportsSuspensions)
                     a.changeSuspensions(current_vehicle.suspensionsIndex);
                 if (a._supportsMotors)
                     a.changeMotor(current_vehicle.motorsIndex);
+                if (a._supportsColor)
+                    a.changeColor(current_vehicle.colorsIndex);
 
 
-                car.tim = this;
+                car.raceManager = this;
                 _originalCar.GetComponent<CarAIControl>().enabled = false;
                 player = _originalCar.GetComponent<CarUserControl>();
                 camera.car = _originalCar.transform;
@@ -189,9 +192,8 @@ public class RaceManager : MonoBehaviour
                 _originalCar.tag = "Player";
                 player.enabled = false;
 
-                car.color = cc_color;
             }
-            else 
+            else
             {
                 //NEED TO SPAWN RANDOM ENEMY VEHICLES
                 car.gameObject.GetComponent<CarUserControl>().enabled = false;
@@ -201,11 +203,10 @@ public class RaceManager : MonoBehaviour
                 aicar.enabled = false;
                 Debug.Log("AI Found");
             }
-            
+
             totalVehicles++;
             car.GetComponent<CarSelfRighting>().SetActive(false);
         }
-        player.GetComponent<CarController>().color = cc_color;
         int opp_limit;
         if (race == true && raceType != RaceData.RaceType.TimeTrail)
         {
@@ -216,9 +217,9 @@ public class RaceManager : MonoBehaviour
             opp_limit = Aicars.Count;
         }
         Debug.Log("OPP_LIMIT = " + opp_limit);
-        while (opp_limit > 0 && Aicars.Count>0) 
+        while (opp_limit > 0 && Aicars.Count > 0)
         {
-            Debug.Log("REMOVED : "+Aicars.Count);
+            Debug.Log("REMOVED : " + Aicars.Count);
             int r = Random.Range(0, Aicars.Count - 1);
             Aicars[r].gameObject.SetActive(false);
             Aicars.RemoveAt(r);
@@ -230,9 +231,9 @@ public class RaceManager : MonoBehaviour
         selected_enemies = shuffled_enemies.GetRange(0, Aicars.Count);
         Color playerColor = player.GetComponent<carModifier>().allSupportedColors.colors[current_vehicle.colorsIndex].color;
         int iter = 0;
-        foreach (CarAIControl cac in Aicars) 
+        foreach (CarAIControl cac in Aicars)
         {
-            if (selected_enemies[iter].color == playerColor) 
+            if (selected_enemies[iter].color == playerColor)
             {
                 selected_enemies[iter] = shuffled_enemies[selected_enemies.Count];
             }
@@ -263,7 +264,7 @@ public class RaceManager : MonoBehaviour
                 cm.changeSuspensions(0);
             if (cm._supportsMotors)
                 cm.changeMotor(0);
-            
+
             iter++;
         }
 
@@ -272,16 +273,17 @@ public class RaceManager : MonoBehaviour
         Debug.Log("CAR" + cars.Length + ": VEHICLES : " + totalVehicles);
         if (raceType == RaceData.RaceType.Elimination)
         {
-            int elemenation_check = laps % (totalVehicles-1);
+            int elemenation_check = laps % (totalVehicles - 1);
             if (elemenation_check == 0)
             {
                 _elemenateEachLap = laps / (totalVehicles - 1);
             }
             else
             {
-                _elemenateEachLap = (laps / (totalVehicles-1)) + 1;
+                _elemenateEachLap = (laps / (totalVehicles - 1)) + 1;
             }
-            
+
+
         }
     }
     private List<T> Shuffle<T>(List<T> list)

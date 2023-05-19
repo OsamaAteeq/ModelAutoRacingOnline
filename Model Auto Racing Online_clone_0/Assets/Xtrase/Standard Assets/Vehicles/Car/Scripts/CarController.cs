@@ -20,7 +20,8 @@ namespace UnityStandardAssets.Vehicles.Car
     public class CarController : MonoBehaviour
     {
         //My Edits start
-        public RaceManager tim;
+        public RaceManager raceManager;
+        public MultiplayerRaceManager multiplayerRaceManager;
 
         private bool respawned = false;
         private bool waitframe = true;
@@ -89,7 +90,10 @@ namespace UnityStandardAssets.Vehicles.Car
         {
 
             //myEdit start
-            tim = transform.root.GetComponentInChildren<RaceManager>();
+
+            raceManager = transform.root.GetComponentInChildren<RaceManager>();
+            multiplayerRaceManager = transform.root.GetComponentInChildren<MultiplayerRaceManager>();
+
             startpos = transform.position;
             startrot = transform.rotation;
 
@@ -128,11 +132,22 @@ namespace UnityStandardAssets.Vehicles.Car
             {
                 crossmiddle = false;
                 lap++;
-                if (lap == tim.laps + 1)
+                if (raceManager.enabled)
                 {
-                    SendMessage("finished");
+                    if (lap == raceManager.laps + 1)
+                    {
+                        SendMessage("finished");
+                    }
+                    raceManager.addlap(transform, lap, color);
                 }
-                tim.addlap(transform, lap, color);
+                if (multiplayerRaceManager.enabled)
+                {
+                    if (lap == multiplayerRaceManager.laps + 1)
+                    {
+                        SendMessage("finished");
+                    }
+                    multiplayerRaceManager.addlap(transform, lap, color);
+                }
             }
         }
 

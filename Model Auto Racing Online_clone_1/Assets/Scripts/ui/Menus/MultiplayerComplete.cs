@@ -38,6 +38,7 @@ public class MultiplayerComplete : Menu
         lobbyManager.Authenticate(editPlayer.GetPlayerName());
 
         lobbyList.StartFunction();
+
         multiplayerHost.StartFunction();
         lobbyUI.StartFunction();
         //LobbyManager.Instance.Authenticate(EditPlayerName.Instance.GetPlayerName());

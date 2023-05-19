@@ -7,7 +7,9 @@ using UnityEngine.UI;
 public class MobilePowerChange : MonoBehaviour
 {
     [SerializeField]
-    public MobileCarController mcc;
+    public MobileCarController mcc = null;
+    [SerializeField]
+    public MultiplayerCarController mcc2 = null;
     private Slider slider; 
     private float default_slide;
     // Start is called before the first frame update
@@ -56,8 +58,10 @@ public class MobilePowerChange : MonoBehaviour
 
         dec_change = change / actual_xtreme;
 
-
-        mcc.SetCarV(dec_change);
+        if(mcc!=null)
+            mcc.SetCarV(dec_change);
+        if (mcc2 != null)
+            mcc2.SetCarV(dec_change);
     }
 
     public bool hasChange() 

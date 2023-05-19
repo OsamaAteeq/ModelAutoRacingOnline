@@ -1,3 +1,5 @@
+using BayatGames.SaveGameFree;
+using Data;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -59,6 +61,7 @@ public class LobbyManager : MonoBehaviour {
 
     private List<string> sceneNames = new List<string>();
     private List<int> maxLaps = new List<int>();
+    private RaceSaver raceSaver;
 
     public void AddMap(string map,int max_lap,string sceneName) 
     {
@@ -149,6 +152,33 @@ public class LobbyManager : MonoBehaviour {
             RelayServerData relayServerData = new RelayServerData(allocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
 
+            if (SaveGame.Exists("multiplayer_race"))
+            {
+                raceSaver = SaveGame.Load<RaceSaver>("multiplayer_race");
+
+                raceSaver.lap = Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
+                GameMode gameMode =
+                    Enum.Parse<GameMode>(joinedLobby.Data[KEY_GAME_MODE].Value);
+                RaceData.RaceType raceType = RaceData.RaceType.Race;
+                switch (gameMode)
+                {
+                    case GameMode.Race:
+                        raceType = RaceData.RaceType.Race;
+                        break;
+                    case GameMode.Elimination:
+                        raceType = RaceData.RaceType.Elimination;
+                        break;
+                    default:
+                        raceType = RaceData.RaceType.Race;
+                        break;
+                }
+                raceSaver.type = raceType;
+                raceSaver.lap = Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
+            }
+            else 
+            {
+                Debug.Log("RACE NOT FOUND");
+            }
             NetworkManager.Singleton.StartHost();
 
             return joinCode;
@@ -168,7 +198,7 @@ public class LobbyManager : MonoBehaviour {
 
             RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
-
+            SaveGame.Save<RaceSaver>("multiplayer_race", raceSaver);
             NetworkManager.Singleton.StartClient();
         }
         catch (RelayServiceException e) 
