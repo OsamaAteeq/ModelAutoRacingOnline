@@ -126,8 +126,7 @@ public class GarageMenu : Menu
         default_vehicle.cost = carlist.cars[0].cost;
         default_vehicle.carIndex = 0; default_vehicle.wheelsIndex = default_vehicle.motorsIndex = default_vehicle.spoilersIndex = default_vehicle.colorsIndex = default_vehicle.suspensionsIndex = 0;
         current_vehicle = SaveGame.Load<VehicleSaver>("current_vehicle", default_vehicle);
-        
-        
+
 
         actuallySelected = current_vehicle.carIndex;
         SpawnVehicle(current_vehicle.carIndex,should_destroy);

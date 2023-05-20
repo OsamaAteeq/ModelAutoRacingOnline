@@ -22,7 +22,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void Awake()
         {
-            if (!IsOwner) return;
+            if (!IsLocalPlayer) return;
             // get the car controller
             m_Car = GetComponent<CarController>();
             multi_Car = GetComponent<MultiplayerCarController>();
@@ -32,7 +32,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void FixedUpdate()
         {
-            if (!IsOwner) return;
+            if (!IsLocalPlayer) return;
             // pass the input to the car!
             if (inputType == InputType.Touch)
             {

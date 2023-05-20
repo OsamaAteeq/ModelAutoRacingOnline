@@ -19,7 +19,9 @@ namespace Data
         private bool is_multiplayer = false;
 
         private string map_name;
+        private string scene_name;
         public string MapName { get => map_name; private set => map_name=value; }
+        public string SceneName { get => scene_name; private set => scene_name = value; }
 
         [System.Serializable]
         public class Standing
@@ -42,10 +44,28 @@ namespace Data
             this.order = order;
             this.difficulty = difficulty;
             this.MapName = map.name;
+            this.scene_name = map.scene_name;
 
             List<Standing> s = new List<Standing>();
             this.standings = s;
 
+        }
+
+        public RaceSaver(string map_name, string scene_name, int lap, int opponent, RaceData.RaceType type)
+        {
+            this.lap = lap;
+            this.map_name = map_name;
+            this.scene_name = scene_name;
+
+            this.opponent = opponent;
+            this.is_race = true;
+            this.type = RaceData.RaceType.Race;
+            this.order = RaceData.RaceOrder.Straight;
+            this.difficulty = RaceData.RaceDifficulty.Hard;
+            this.income_factor = 0;
+            this.cost = 0;
+            this.is_tournament = false;
+            this.is_multiplayer = true;
         }
 
         public RaceSaver (MapSaver map)
@@ -61,6 +81,7 @@ namespace Data
             this.cost = 0;
             this.is_tournament = false;
             this.MapName = map.name;
+            this.scene_name = map.scene_name;
         }
 
         /*

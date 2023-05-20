@@ -58,6 +58,7 @@ public class LobbyUI : MonoBehaviour {
         });
 
         goButton.onClick.AddListener(()=> {
+            goButton.interactable = false;
             LobbyManager.Instance.StartGame();
         });
     }

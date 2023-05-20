@@ -156,7 +156,7 @@ public class RaceManager : MonoBehaviour
             if (totalVehicles == rand_player_index)
             {
                 WaypointCircuit wc = car.GetComponent<WaypointProgressTracker>().circuit;
-
+                Color cc_color = new Color(0.2f,0.2f,0.2f,0.2f);
                 GameObject _originalCar = car.gameObject;
                 Debug.Log("Player Found");
                 Destroy(_originalCar);
@@ -173,16 +173,20 @@ public class RaceManager : MonoBehaviour
 
                 if (a._supportsWheel)
                     a.changeWheels(current_vehicle.wheelsIndex);
+                if (a._supportsColor)
+                {
+                    a.changeColor(current_vehicle.colorsIndex);
+                    cc_color = a.allSupportedColors.colors[current_vehicle.colorsIndex].color;
+                }
                 if (a._supportsSpoilers)
                     a.changeSpoilers(current_vehicle.spoilersIndex);
                 if (a._supportsSuspensions)
                     a.changeSuspensions(current_vehicle.suspensionsIndex);
                 if (a._supportsMotors)
                     a.changeMotor(current_vehicle.motorsIndex);
-                if (a._supportsColor)
-                    a.changeColor(current_vehicle.colorsIndex);
 
 
+                car.color = cc_color;
                 car.raceManager = this;
                 _originalCar.GetComponent<CarAIControl>().enabled = false;
                 player = _originalCar.GetComponent<CarUserControl>();
@@ -285,6 +289,7 @@ public class RaceManager : MonoBehaviour
 
 
         }
+        //car.
     }
     private List<T> Shuffle<T>(List<T> list)
     {

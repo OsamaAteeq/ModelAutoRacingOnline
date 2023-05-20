@@ -246,7 +246,7 @@ public class MultiplayerHost : MonoBehaviour
         //Debug.Log(selected_map.map_image);
         // Debug.Log(selected_map.getImage());
 
-        if ((selected_map.max_opponents < opp) && !SaveGame.Exists("current_tournament"))
+        if ((selected_map.max_opponents < opp))
         {
             opp = (selected_map.max_opponents);
             _opponentText.text = "" + (opp + 1);

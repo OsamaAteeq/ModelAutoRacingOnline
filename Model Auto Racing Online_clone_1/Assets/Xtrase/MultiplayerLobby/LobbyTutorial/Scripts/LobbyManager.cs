@@ -174,10 +174,32 @@ public class LobbyManager : MonoBehaviour {
                 }
                 raceSaver.type = raceType;
                 raceSaver.lap = Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
+                raceSaver.opponent = (joinedLobby.MaxPlayers - 1);
+                SaveGame.Save<RaceSaver>("multiplayer_race",raceSaver);
             }
             else 
             {
-                Debug.Log("RACE NOT FOUND");
+                int laps = Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
+                GameMode gameMode =
+                    Enum.Parse<GameMode>(joinedLobby.Data[KEY_GAME_MODE].Value);
+                RaceData.RaceType raceType = RaceData.RaceType.Race;
+                switch (gameMode)
+                {
+                    case GameMode.Race:
+                        raceType = RaceData.RaceType.Race;
+                        break;
+                    case GameMode.Elimination:
+                        raceType = RaceData.RaceType.Elimination;
+                        break;
+                    default:
+                        raceType = RaceData.RaceType.Race;
+                        break;
+                }
+                string map_name = joinedLobby.Data[KEY_MAP].Value;
+                string scene_name = joinedLobby.Data[KEY_SCENE_NAME].Value;
+                int opp = (joinedLobby.MaxPlayers - 1);
+                raceSaver = new RaceSaver(map_name, scene_name, laps, opp, raceType);
+                SaveGame.Save<RaceSaver>("multiplayer_race", raceSaver);
             }
             NetworkManager.Singleton.StartHost();
 
@@ -198,7 +220,6 @@ public class LobbyManager : MonoBehaviour {
 
             RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
-            SaveGame.Save<RaceSaver>("multiplayer_race", raceSaver);
             NetworkManager.Singleton.StartClient();
         }
         catch (RelayServiceException e) 
