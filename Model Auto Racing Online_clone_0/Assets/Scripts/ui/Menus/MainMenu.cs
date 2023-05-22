@@ -7,6 +7,8 @@ using TMPro;
 using BayatGames.SaveGameFree;
 using Data;
 using CodeMonkey.Utils;
+using Unity.Services.Authentication;
+using Unity.Netcode;
 
 public class MainMenu : Menu
 {
@@ -50,6 +52,10 @@ public class MainMenu : Menu
     override
     public void SetEnable(int value) 
     {
+        if (NetworkManager.Singleton.IsConnectedClient) 
+        {
+            _menuManager.SwitchMenu(MenuType.MultiplayerCompleteMenu);
+        }
         base.SetEnable(value);
         //SaveGame.Clear();                                                         //Testing purpose only
         PersonalSaver temp = new PersonalSaver("0", "User Name", 1000, new Color(255f / 255, 189f / 255, 0));

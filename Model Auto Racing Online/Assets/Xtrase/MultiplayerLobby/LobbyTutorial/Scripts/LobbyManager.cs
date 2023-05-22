@@ -174,7 +174,7 @@ public class LobbyManager : MonoBehaviour {
                 }
                 raceSaver.type = raceType;
                 raceSaver.lap = Int32.Parse(joinedLobby.Data[KEY_LAP].Value);
-                raceSaver.opponent = (joinedLobby.MaxPlayers - 1);
+                raceSaver.opponent = (joinedLobby.Players.Count);
                 SaveGame.Save<RaceSaver>("multiplayer_race",raceSaver);
             }
             else 

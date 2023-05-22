@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
+using UnityStandardAssets.Vehicles.Car;
 
 public class MultiplayerCarController : NetworkBehaviour
 {
@@ -16,9 +18,24 @@ public class MultiplayerCarController : NetworkBehaviour
     {
         myCarH = vval;
     }
-    public void SetTransform(Transform t) 
+    public void SetTransform(Transform t)
     {
+        if (!IsServer) {return; }
+        bool org = this.GetComponent<NetworkTransform>().Interpolate;
+        this.GetComponent<NetworkTransform>().Interpolate = false;
         transform.position = t.position;
         transform.rotation = t.rotation;
+
+        this.GetComponent<NetworkTransform>().Interpolate = org;
+    }
+
+    public override void OnDestroy()
+    {
+        CarController cc = GetComponent<CarController>();
+        if (cc.multiplayerRaceManager != null && IsServer) 
+        {
+            Debug.Log("RPC ALERT: " + "DESTROYED "+name);
+        }
+        base.OnDestroy();
     }
 }

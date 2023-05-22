@@ -1,0 +1,17 @@
+﻿public enum MenuType
+{
+    None,
+    Main,
+    Play,
+    Singleplayer,
+    Garage,
+    Multiplayer,
+    Options,
+    OfflineTournament,
+    SingleplayerMaps,
+    Modification,
+    MultiplayerRace,
+    JoinMultiplayerRace,
+    HostMultiplayerRace,
+    MultiplayerCompleteMenu
+}

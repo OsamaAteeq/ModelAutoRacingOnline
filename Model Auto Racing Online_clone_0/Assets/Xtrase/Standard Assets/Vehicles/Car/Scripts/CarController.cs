@@ -132,21 +132,28 @@ namespace UnityStandardAssets.Vehicles.Car
             {
                 crossmiddle = false;
                 lap++;
-                if (raceManager.enabled)
+                if (raceManager!=null)
                 {
-                    if (lap == raceManager.laps + 1)
+                    if (raceManager.enabled)
                     {
-                        SendMessage("finished");
+                        if (lap == raceManager.laps + 1)
+                        {
+                            SendMessage("finished");
+                        }
+                        raceManager.addlap(transform, lap, color);
                     }
-                    raceManager.addlap(transform, lap, color);
                 }
-                if (multiplayerRaceManager.enabled)
+                if (multiplayerRaceManager!=null)
                 {
-                    if (lap == multiplayerRaceManager.laps + 1)
+                    if (multiplayerRaceManager.enabled)
                     {
-                        SendMessage("finished");
+                        if (lap == multiplayerRaceManager.laps + 1)
+                        {
+                            SendMessage("finished");
+                        }
+
+                        multiplayerRaceManager.addlap(transform, lap, color);
                     }
-                    multiplayerRaceManager.addlap(transform, lap, color);
                 }
             }
         }

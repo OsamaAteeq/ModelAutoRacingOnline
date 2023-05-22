@@ -19,20 +19,20 @@ namespace UnityStandardAssets.Vehicles.Car
         [SerializeField] private InputType inputType = InputType.Touch;
         private float v;
         private float h;
+        private bool gotCar = false;
 
-        private void Awake()
+        public void getCar() 
         {
-            if (!IsLocalPlayer) return;
             // get the car controller
             m_Car = GetComponent<CarController>();
             multi_Car = GetComponent<MultiplayerCarController>();
-
+            gotCar = true;
         }
-
 
         private void FixedUpdate()
         {
-            if (!IsLocalPlayer) return;
+            if ((!IsLocalPlayer)||(!gotCar)) return;
+            
             // pass the input to the car!
             if (inputType == InputType.Touch)
             {
@@ -61,8 +61,21 @@ namespace UnityStandardAssets.Vehicles.Car
             float handbrake = CrossPlatformInputManager.GetAxis("Jump");
             m_Car.Move(h, v, v, handbrake);
 #else
-            m_Car.Move(h, v, v, 0f);
+            if (IsServer)
+            {
+                m_Car.Move(h, v, v, 0f);
+            }
+            else 
+            {
+                MoveServerRpc(h,v);
+            }
 #endif
+        }
+
+        [ServerRpc]
+        private void MoveServerRpc(float h,float v) 
+        {
+            m_Car.Move(h, v, v, 0f);
         }
     }
 }
