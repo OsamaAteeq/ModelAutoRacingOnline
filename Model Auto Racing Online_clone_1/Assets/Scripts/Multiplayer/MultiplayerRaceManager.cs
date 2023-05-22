@@ -24,8 +24,10 @@ public class MultiplayerRaceManager : NetworkBehaviour
     public int _winInTop = 3;
     [SerializeField]
     private int _elemenateEachLap = 1;
+    [SerializeField]
+    private float _secondsForEachLap = 30f;
 
-    public int wincount = 0;
+
 
 
     public int laps = 1;
@@ -34,6 +36,8 @@ public class MultiplayerRaceManager : NetworkBehaviour
 
     public int startcount = 0;
     public bool _startcount = false;
+
+    
 
     public float count = 0;
 
@@ -85,6 +89,8 @@ public class MultiplayerRaceManager : NetworkBehaviour
 
 
     //Private
+    
+   
 
     private float time = 0;
     private bool finished = false;
@@ -93,15 +99,13 @@ public class MultiplayerRaceManager : NetworkBehaviour
     private float minutes;
     private float seconds;
     private float fraction;
-    private CarController[] cars;
-    private List<CarController> passedCars = new List<CarController>();
-    private CarMultiplayerControl player;
 
+    private float minutes_f;
+    private float seconds_f;
+    private float fraction_f;
 
-    private RaceSaver raceSaver;
-    private VehicleSaver current_vehicle;
+    private List<MultiplayerCarController> passedCars = new List<MultiplayerCarController>();
 
-    private bool race;
     public int opp;
 
     public MultiplayerCarController serverCar;
@@ -112,7 +116,7 @@ public class MultiplayerRaceManager : NetworkBehaviour
     private int spawned_count = 0;                                                  //TO CHECK HOW MANY VEHICLES SPAWNED
     private WaypointCircuit circuit;
     private int elemenation_check = 0;
-    private NetworkTimeSystem netTime = NetworkManager.Singleton.NetworkTimeSystem;
+    
     #endregion
     //NETWORK VARIABLES
 
@@ -218,13 +222,18 @@ public class MultiplayerRaceManager : NetworkBehaviour
     private NetworkVariable<int> _loadedPlayers = new NetworkVariable<int>(0);
     private NetworkVariable<bool> loaded = new NetworkVariable<bool>(false);
     private NetworkVariable<bool> spawned = new NetworkVariable<bool>(false);
+    public NetworkVariable<int> wincount = new NetworkVariable<int>(0);
+    private NetworkVariable<int> finish_count = new NetworkVariable<int>(0);
+    private NetworkVariable<float> finish_time = new NetworkVariable<float>(0);
+    private NetworkVariable<bool> finish_timer = new NetworkVariable<bool>(false);
+
     public bool IsLoaded { get => loaded.Value; }
     public bool HasSpawnedCars { get => spawned.Value; }
     #endregion
 
     public override void OnNetworkSpawn()
     {
-
+        finish_time.Value = _secondsForEachLap;
         Debug.Log("THIS RACE IS MULTIPLAYER");
         if (IsServer)
         {
@@ -277,6 +286,13 @@ public class MultiplayerRaceManager : NetworkBehaviour
                 }
             };
 
+            finish_count.OnValueChanged += (int previousValue, int newValue) => 
+            {
+                if (newValue == NetworkManager.Singleton.ConnectedClients.Count) 
+                {
+                    Endit();
+                }
+            };
 
 
         }
@@ -434,6 +450,13 @@ public class MultiplayerRaceManager : NetworkBehaviour
 
     private void OnLoadComplete(ulong clientId, string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode)
     {
+        if (sceneName == "Menu") 
+        {
+            SendMessage("SwitchMenu", MenuType.MultiplayerCompleteMenu);
+            NetworkManager.Shutdown();
+            return; 
+        }
+
         _loadedPlayers.Value = (_loadedPlayers.Value + 1);
         if (clientId == NetworkManager.LocalClientId)
         {
@@ -447,6 +470,11 @@ public class MultiplayerRaceManager : NetworkBehaviour
                     raceType = _raceSaver.type,
                     opp = _raceSaver.opponent
                 };
+                _winInTop = (int) Math.Ceiling(opp / 2f);
+                if (_winInTop > 3) 
+                {
+                    _winInTop = 3;
+                }
                 MultiplayerCarController[] pc = FindObjectsOfType<MultiplayerCarController>();
 
             }
@@ -456,6 +484,12 @@ public class MultiplayerRaceManager : NetworkBehaviour
                 laps = _multiplayerData.Value.laps;
                 opp = _multiplayerData.Value.opp;
                 raceType = _multiplayerData.Value.raceType;
+
+                _winInTop = (int)Math.Ceiling(opp / 2f);
+                if (_winInTop > 3)
+                {
+                    _winInTop = 3;
+                }
             };
         }
         else if (_loadedPlayers.Value == (_multiplayerData.Value.opp))                              //ALL CLIENTS HAVE LOADED THE SCENE
@@ -516,6 +550,12 @@ public class MultiplayerRaceManager : NetworkBehaviour
     #region ServerRpc
 
     [ServerRpc(RequireOwnership = false)]
+    private void WarnServerRpc(bool eliminate)
+    {
+        WarnClientRpc(eliminate);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
     private void SpawnVehicleServerRpc(ulong clientId, carData car)
     {
         int length = playerCars.Count;
@@ -541,6 +581,16 @@ public class MultiplayerRaceManager : NetworkBehaviour
         netObj = newPlayer.GetComponent<NetworkObject>();
         newPlayer.SetActive(true);
         netObj.SpawnAsPlayerObject(clientId, true);
+
+        /*
+        carModifier cm = newPlayer.GetComponent<carModifier>();
+        cm.changeWheels(car.wheelsIndex);
+        cm.changeMotor(car.motorsIndex);
+        cm.changeSuspensions(car.suspensionsIndex);
+        cm.changeSpoilers(car.spoilersIndex);
+        cm.changeColor(car.colorsIndex);
+        */
+
         //UPGRADE VEHICLE HERE
         netObj.TrySetParent(this.transform);
 
@@ -558,11 +608,146 @@ public class MultiplayerRaceManager : NetworkBehaviour
         StartCoroutine(InformCoroutine(2));
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    private void FinishServerRpc(ulong clientId) 
+    {
+        if (wincount.Value <= _winInTop)
+        {
+            WinClientRpc(new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new List<ulong> { clientId } } });
+        }
+        else 
+        {
+            LoseClientRpc(new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new List<ulong> { clientId } } });
+        }
+        if (wincount.Value > 0) 
+        {
+            finish_timer.Value = true;
+        }
+        finish_count.Value = finish_count.Value + 1;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void EliminateServerRpc(ulong clientId)
+    {
+        Debug.LogWarning("Breakpoint 1 : " + clientId);
+
+        MultiplayerCarController who = null;
+        foreach (MultiplayerCarController mcc in playerCars) 
+        {
+            if (mcc.OwnerClientId == clientId) 
+            {
+                who = mcc;
+                break;
+            }
+        }
+        if (who != null)
+        {
+            if (!passedCars.Contains(who))
+            {
+                passedCars.Add(who);
+                Debug.LogWarning("Breakpoint 2 " + (_multiplayerData.Value.opp - _elemenateEachLap) + ": " + passedCars.Count);
+                int y = _multiplayerData.Value.opp;
+                if (passedCars.Count == (y - _elemenateEachLap))
+                {
+                    foreach (MultiplayerCarController car in playerCars)
+                    {
+                        if (!passedCars.Contains(car) && car.gameObject.activeInHierarchy)
+                        {
+                            car.gameObject.SetActive(false);
+                            LoseClientRpc(new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new List<ulong> { car.OwnerClientId } } });
+                            finish_count.Value = finish_count.Value + 1;
+                            Debug.Log("Deactivated : " + car.gameObject.name);
+                        }
+                    }
+                    WarnClientRpc(true);
+                    passedCars.Clear();
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Breakpoint 3 : LAP TWICE");
+                List<WaypointProgressTracker> notPassed = new List<WaypointProgressTracker>();
+                GameObject toRemove = new GameObject();
+                int num_to_remove = _elemenateEachLap;
+
+                float min;
+                foreach (MultiplayerCarController car in playerCars)
+                {
+                    if (!passedCars.Contains(car) && car.gameObject.activeInHierarchy)
+                    {
+                        notPassed.Add(car.GetComponent<WaypointProgressTracker>());
+                    }
+                }
+                while (num_to_remove > 0 && notPassed.Count > 0)
+                {
+                    min = float.MaxValue;
+                    foreach (WaypointProgressTracker loser in notPassed)
+                    {
+                        if (loser.GetProgress() < min)
+                        {
+                            min = loser.GetProgress();
+                            toRemove = loser.gameObject;
+                        }
+                    }
+                    notPassed.Remove(toRemove.GetComponent<WaypointProgressTracker>());
+                    toRemove.SetActive(false);
+                    LoseClientRpc(new ClientRpcParams { Send = new ClientRpcSendParams { TargetClientIds = new List<ulong> { toRemove.GetComponent<NetworkObject>().OwnerClientId } } });
+                    finish_count.Value = finish_count.Value + 1;
+                    Debug.Log("Deactivated Lapped 2 times : " + toRemove.name);
+                    num_to_remove--;
+                    totalVehicles.Value = totalVehicles.Value - 1;
+                }
+                WarnClientRpc(true);
+                passedCars.Clear();
+            }
+        }
+        else 
+        {
+            Debug.Log("RPC ALERT: "+"WTF BRO");
+        }
+    }
+
     #endregion
 
 
     #region ClientRpc
-
+    [ClientRpc]
+    private void WinClientRpc(ClientRpcParams clientRpcParams)
+    {
+        beeps[3].Stop();
+        beeps[4].PlayOneShot(winrace);
+        localCar.gameObject.SetActive(false);
+        ShowBack();
+        finished = true;
+    }
+    [ClientRpc]
+    private void LoseClientRpc(ClientRpcParams clientRpcParams)
+    {
+        beeps[3].Stop();
+        beeps[4].PlayOneShot(loserace);
+        localCar.gameObject.SetActive(false);
+        ShowBack();
+        finished = true;
+    }
+    [ClientRpc]
+    private void WarnClientRpc(bool eliminate)
+    {
+        if (localCar.gameObject.activeInHierarchy)
+        {
+            pausemusicbriefly(2.5f);
+            beeps[4].PlayOneShot(finallap);
+            if (eliminate)
+            {
+                finallaptext.text = _elemenateEachLap + " Eliminated";
+            }
+            else 
+            {
+                finallaptext.text = "Final Lap";
+            }
+            finallaptext.enabled = true;
+            Invoke("removemes", 2);
+        }
+    }
     [ClientRpc]
     private void UpdateClientRpc()
     {
@@ -670,7 +855,35 @@ public class MultiplayerRaceManager : NetworkBehaviour
         
 
     }
-
+    public void InformAgain()
+    {
+        InformAgainClientRpc();
+    }
+    [ClientRpc]
+    private void InformAgainClientRpc()
+    {
+        spawned_count = 0;
+        Debug.Log("RPC ALERT: INFORM AGAIN CLIENT RPC");
+        MultiplayerCarController[] temp = NetworkManager.FindObjectsOfType<MultiplayerCarController>();
+        playerCars = new List<MultiplayerCarController>();
+        foreach (MultiplayerCarController mcc in temp)
+        {
+            if (mcc.isActiveAndEnabled)
+            {
+                Debug.Log("RPC ALERT : " + "ADDED A PLAYER " + mcc.name + ": " + mcc.NetworkObject.OwnerClientId);
+                playerCars.Add(mcc);
+            }
+        }
+        spawned_count += 1;
+        if (IsServer)
+        {
+            if (spawned_count == NetworkManager.Singleton.ConnectedClients.Count)
+            {
+                spawned.Value = true;
+            }
+        }
+    }
+        
     [ClientRpc]
     private void InformClientRpc() 
     {
@@ -719,6 +932,12 @@ public class MultiplayerRaceManager : NetworkBehaviour
         opp = _multiplayerData.Value.opp;
         raceType = _multiplayerData.Value.raceType;
 
+        _winInTop = (int)Math.Ceiling(opp / 2f);
+        if (_winInTop > 3)
+        {
+            _winInTop = 3;
+        }
+
         preset_cars = GetComponentsInChildren<CarController>();
         foreach (CarController car in preset_cars)
         {
@@ -745,6 +964,12 @@ public class MultiplayerRaceManager : NetworkBehaviour
             laps = _multiplayerData.Value.laps;
             opp = _multiplayerData.Value.opp;
             raceType = _multiplayerData.Value.raceType;
+
+            _winInTop = (int)Math.Ceiling(opp / 2f);
+            if (_winInTop > 3)
+            {
+                _winInTop = 3;
+            }
         };
     }
 
@@ -854,10 +1079,28 @@ public class MultiplayerRaceManager : NetworkBehaviour
         {
             time += Time.deltaTime;
         }
-
         minutes = Mathf.Floor(time / 60);
         seconds = Mathf.Floor(time) % 60;
         fraction = Mathf.Floor(time * 100) % 100;
+
+        if (finish_timer.Value)
+        {
+            finish_time.Value = finish_time.Value - Time.deltaTime;
+            if (finish_time.Value <= 0)
+            {
+                finish_time.Value = 0;
+                Endit();
+                if(IsServer)
+                finish_timer.Value = false;
+            }
+
+            minutes_f = Mathf.Floor(finish_time.Value / 60);
+            seconds_f = Mathf.Floor(finish_time.Value) % 60;
+            fraction_f = Mathf.Floor(finish_time.Value * 100) % 100;
+            entertostart.text = "WAITING FOR PLAYERS TO FINISH\n" + string.Format("{0:00} : {1:00} : {2:00}", minutes_f, seconds_f, fraction_f);
+        }
+        
+       
 
         if (!finished)
         {
@@ -866,17 +1109,22 @@ public class MultiplayerRaceManager : NetworkBehaviour
         }
 
     }
-    public void GoBack()
+
+    private void Endit()
     {
-
+        Debug.Log("RPC ALERT" + "END IT RAN");
         StartCoroutine(waiter());
+    }
 
+    public void ShowBack()
+    {
+        entertostart.enabled = true;
     }
     private IEnumerator waiter()
     {
         yield return new WaitForSeconds(5f);
-        SceneManager.LoadSceneAsync("Menu");
-        //my code here after 3 seconds
+        NetworkManager.Singleton.SceneManager.LoadScene("Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
+        //my code here after 5 seconds
     }
 
 
@@ -887,128 +1135,33 @@ public class MultiplayerRaceManager : NetworkBehaviour
             crossGoal(who, color);
         }
 
-        if (who.CompareTag("Player"))
+        if (who.GetComponent<NetworkObject>().IsLocalPlayer)
         {
             if (lap == laps + 1)
             {
-                if (wincount <= _winInTop)
-                {
-                    beeps[3].Stop();
-                    beeps[4].PlayOneShot(winrace);
-                    GoBack();
-
-                }
-                else
-                {
-                    beeps[3].Stop();
-                    beeps[4].PlayOneShot(loserace);
-                    GoBack();
-
-                }
-                finished = true;
+                FinishServerRpc(who.GetComponent<NetworkObject>().OwnerClientId);
             }
             else if (lap < laps + 1)
             {
-
                 currentlap = lap;
                 lapsLabel.text = timerLabel.text + "\n" + lapsLabel.text;
                 if (lap == laps && raceType != RaceData.RaceType.Elimination)
                 {
+                    if (IsServer)
+                    {
+                        WarnClientRpc(false);
+                    }
+                    else
+                    {
+                        WarnServerRpc(false);
+                    }
                     //final lap
-                    pausemusicbriefly(2.5f);
-                    beeps[4].PlayOneShot(finallap);
-                    finallaptext.text = "Final Lap";
-                    finallaptext.enabled = true;
-                    Invoke("removemes", 2);
                 }
             }
         }
-        if (raceType == RaceData.RaceType.Elimination)
+        if (_multiplayerData.Value.raceType == RaceData.RaceType.Elimination)
         {
-            Debug.LogWarning("Breakpoint 1 : " + who.name);
-            if (!passedCars.Contains(who.gameObject.GetComponent<CarController>()))
-            {
-                passedCars.Add(who.gameObject.GetComponent<CarController>());
-                Debug.LogWarning("Breakpoint 2 " + (totalVehicles.Value - _elemenateEachLap) + ": " + passedCars.Count);
-                int y = totalVehicles.Value;
-                if (passedCars.Count == (y - _elemenateEachLap))
-                {
-                    foreach (CarController car in cars)
-                    {
-                        if (!passedCars.Contains(car) && car.gameObject.activeInHierarchy)
-                        {
-                            car.gameObject.SetActive(false);
-                            if (car.CompareTag("Player"))
-                            {
-                                finished = true;
-                                beeps[3].Stop();
-                                beeps[4].PlayOneShot(loserace);
-                                GoBack();
-                            }
-                            Debug.Log("Deactivated : " + car.gameObject.name);
-                            totalVehicles.Value = totalVehicles.Value - 1;
-                        }
-                    }
-                    if (player.gameObject.activeInHierarchy)
-                    {
-                        pausemusicbriefly(2.5f);
-                        beeps[4].PlayOneShot(finallap);
-                        finallaptext.text = _elemenateEachLap + " Eliminated";
-                        finallaptext.enabled = true;
-                        Invoke("removemes", 2);
-                    }
-                    passedCars.Clear();
-                }
-            }
-            else
-            {
-                Debug.LogWarning("Breakpoint 3 : LAP TWICE");
-                List<WaypointProgressTracker> notPassed = new List<WaypointProgressTracker>();
-                GameObject toRemove = new GameObject();
-                int num_to_remove = _elemenateEachLap;
-
-                float min;
-                foreach (CarController car in cars)
-                {
-                    if (!passedCars.Contains(car) && car.gameObject.activeInHierarchy)
-                    {
-                        notPassed.Add(car.GetComponent<WaypointProgressTracker>());
-                    }
-                }
-                while (num_to_remove > 0 && notPassed.Count > 0)
-                {
-                    min = float.MaxValue;
-                    foreach (WaypointProgressTracker loser in notPassed)
-                    {
-                        if (loser.GetProgress() < min)
-                        {
-                            min = loser.GetProgress();
-                            toRemove = loser.gameObject;
-                        }
-                    }
-                    notPassed.Remove(toRemove.GetComponent<WaypointProgressTracker>());
-                    toRemove.SetActive(false);
-                    if (toRemove.CompareTag("Player"))
-                    {
-                        finished = true;
-                        beeps[3].Stop();
-                        beeps[4].PlayOneShot(loserace);
-                        GoBack();
-                    }
-                    Debug.Log("Deactivated Lapped 2 times : " + toRemove.name);
-                    num_to_remove--;
-                    totalVehicles.Value = totalVehicles.Value - 1;
-                }
-                if (player.gameObject.activeInHierarchy)
-                {
-                    pausemusicbriefly(2.5f);
-                    beeps[4].PlayOneShot(finallap);
-                    finallaptext.text = _elemenateEachLap + " Eliminated";
-                    finallaptext.enabled = true;
-                    Invoke("removemes", 2);
-                }
-                passedCars.Clear();
-            }
+            EliminateServerRpc(who.GetComponent<NetworkObject>().OwnerClientId);  
         }
 
     }
@@ -1051,16 +1204,17 @@ public class MultiplayerRaceManager : NetworkBehaviour
         Text myText = newGO.AddComponent<Text>();
         RectTransform recttrans = newGO.GetComponent<RectTransform>();
         recttrans.sizeDelta = new Vector2(400, 100);
-        Vector3 pos = new Vector3(-200, 145 - 60 * wincount, 0);
+        Vector3 pos = new Vector3(-200, 145 - 60 * wincount.Value, 0);
         myText.transform.localPosition = pos;
-
-        wincount++;
+        if (IsServer)
+        {
+            wincount.Value++;
+        }
         myText.font = myfont;
         myText.fontStyle = FontStyle.Bold;
         myText.fontSize = 60;
         myText.alignment = TextAnchor.UpperRight;
         myText.color = color;
-        myText.text = (wincount) + ".   " + string.Format("{0:00} : {1:00} : {2:00}", minutes, seconds, fraction); ;
-        who.gameObject.SetActive(false);
+        myText.text = (wincount.Value) + ".   " + string.Format("{0:00} : {1:00} : {2:00}", minutes, seconds, fraction);
     }
 }

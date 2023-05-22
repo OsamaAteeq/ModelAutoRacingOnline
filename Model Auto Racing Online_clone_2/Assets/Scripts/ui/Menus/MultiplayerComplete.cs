@@ -11,7 +11,7 @@ public class MultiplayerComplete : Menu
 {
 
     [Header("Inherit External Refrences")]
-    [SerializeField] LobbyManager lobbyManager;
+    //[SerializeField] LobbyManager lobbyManager;
     [SerializeField] LobbyAssets lobbyAssets;
 
     [Header("Inherit Internal Refrences")]
@@ -35,18 +35,21 @@ public class MultiplayerComplete : Menu
         multiplayerHost.AwakeFunction();
         lobbyCreate.AwakeFunction();
         uI_Input.AwakeFunction();
-        lobbyManager.Authenticate(editPlayer.GetPlayerName());
-
-        lobbyList.StartFunction();
+        if (!LobbyManager.Instance.IsLoggedIn)
+        {
+            LobbyManager.Instance.Authenticate(editPlayer.GetPlayerName());
+        }
+        
 
         multiplayerHost.StartFunction();
         lobbyUI.StartFunction();
+        lobbyList.StartFunction();
         //LobbyManager.Instance.Authenticate(EditPlayerName.Instance.GetPlayerName());
     }
 
     public void HandleBackButtonPressed() 
     {
-        lobbyManager.DeAuthenticate();
+        LobbyManager.Instance.DeAuthenticate();
         _menuManager.SwitchMenu(MenuType.Multiplayer);
     }
 }

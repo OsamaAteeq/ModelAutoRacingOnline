@@ -52,10 +52,7 @@ public class MainMenu : Menu
     override
     public void SetEnable(int value) 
     {
-        if (NetworkManager.Singleton.IsConnectedClient) 
-        {
-            _menuManager.SwitchMenu(MenuType.MultiplayerCompleteMenu);
-        }
+        
         base.SetEnable(value);
         //SaveGame.Clear();                                                         //Testing purpose only
         PersonalSaver temp = new PersonalSaver("0", "User Name", 1000, new Color(255f / 255, 189f / 255, 0));
@@ -94,9 +91,22 @@ public class MainMenu : Menu
             }
         }
         _storeButton.GetComponentInChildren<TextMeshProUGUI>().text = money;
+
+       if (IsMultiplayer())
+       {
+            NetworkManager.Singleton.Shutdown();
+            //_menuManager.SwitchMenu(MenuType.MultiplayerCompleteMenu);
+       }
+        if (LobbyManager.Instance.IsLoggedIn) 
+        {
+            LobbyManager.Instance.DeAuthenticate();
+        }
     }
 
-    
+    private bool IsMultiplayer()
+    {
+        return NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost;
+    }
 
     public void HandleProfileButtonPressed()
     {

@@ -62,7 +62,8 @@ public class LobbyManager : MonoBehaviour {
     private List<string> sceneNames = new List<string>();
     private List<int> maxLaps = new List<int>();
     private RaceSaver raceSaver;
-
+    private bool isLoggedIn = false;
+    public bool IsLoggedIn { get => isLoggedIn; }
     public void AddMap(string map,int max_lap,string sceneName) 
     {
         sceneNames.Add(sceneName);
@@ -79,6 +80,7 @@ public class LobbyManager : MonoBehaviour {
         sceneNames.RemoveAt(mapNames.IndexOf(map));
         return mapNames.Remove(map);
     }
+
 
     public async void StartGame()
     {
@@ -124,7 +126,10 @@ public class LobbyManager : MonoBehaviour {
         HandleLobbyHeartbeat();
         HandleLobbyPolling();
     }
-
+    public bool HasLobby() 
+    {
+        return (joinedLobby != null);
+    }
     public async void Authenticate(string playerName) {
         this.playerName = playerName;
         InitializationOptions initializationOptions = new InitializationOptions();
@@ -135,7 +140,7 @@ public class LobbyManager : MonoBehaviour {
         AuthenticationService.Instance.SignedIn += () => {
             // do nothing
             Debug.Log("Signed in! " + AuthenticationService.Instance.PlayerId);
-
+            isLoggedIn = true;
             RefreshLobbyList();
         };
 
@@ -231,7 +236,12 @@ public class LobbyManager : MonoBehaviour {
 
     public async void DeAuthenticate()
     {
-        Debug.Log("SIGNED OUT : "+AuthenticationService.Instance.PlayerId);
+        
+        AuthenticationService.Instance.SignedOut += () => 
+        {
+            Debug.Log("SIGNED OUT : " + AuthenticationService.Instance.PlayerId);
+            isLoggedIn = false;
+        };
         await AuthenticationService.Instance.DeleteAccountAsync();
     }
 

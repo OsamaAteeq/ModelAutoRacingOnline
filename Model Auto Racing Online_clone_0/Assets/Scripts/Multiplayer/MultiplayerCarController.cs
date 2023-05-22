@@ -34,6 +34,7 @@ public class MultiplayerCarController : NetworkBehaviour
         CarController cc = GetComponent<CarController>();
         if (cc.multiplayerRaceManager != null && IsServer) 
         {
+            cc.multiplayerRaceManager.InformAgain();
             Debug.Log("RPC ALERT: " + "DESTROYED "+name);
         }
         base.OnDestroy();
