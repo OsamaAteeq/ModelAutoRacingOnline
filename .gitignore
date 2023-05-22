@@ -2,6 +2,12 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/master/Unity.gitignore
 #
+#
+#MY EDITS START
+*_clone_[0-9]/
+!/*/*_clone_[0-9]/
+#MY EDITS END
+#
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
