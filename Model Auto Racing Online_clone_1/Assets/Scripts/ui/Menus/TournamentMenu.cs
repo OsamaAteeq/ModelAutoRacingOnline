@@ -295,6 +295,8 @@ public class TournamentMenu : Menu
     }
     public void HandleBuyButtonPressed()
     {
+        PlayerPrefs.SetString("ac2","true");
+
         intmoney -= tournament.cost;
         player.cash = intmoney;
         SaveGame.Save<PersonalSaver>("player", player);

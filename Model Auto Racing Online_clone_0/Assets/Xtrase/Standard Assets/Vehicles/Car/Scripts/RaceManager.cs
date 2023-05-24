@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using Data;
 using Random = UnityEngine.Random;
-
 using UnityStandardAssets.Vehicles.Car;
 using UnityStandardAssets.Utility;
 using UnityEngine.SceneManagement;
@@ -108,6 +107,7 @@ public class RaceManager : MonoBehaviour
     private bool race;
     private int opp;
     private List<PersonalSaver> selected_enemies;
+    private float music;
     private void Awake()
     {
         if (IsMultiplayer())
@@ -122,6 +122,7 @@ public class RaceManager : MonoBehaviour
     }
     private void Start()
     {
+        music = PlayerPrefs.GetFloat("music");
         Debug.Log("THIS RACE IS SINGLEPLAYER");
 
         raceSaver = SaveGame.Load<RaceSaver>("current_race");
@@ -145,7 +146,7 @@ public class RaceManager : MonoBehaviour
         Debug.Log("LAPS: " + laps + ": OPP : " + opp + " : Type : " + raceType + " : RACE : " + race);
 
         beeps = place.GetComponents<AudioSource>();
-        beeps[4].PlayOneShot(racestart);
+        beeps[4].PlayOneShot(racestart,music);
         cars = GetComponentsInChildren<CarController>();
         int rand_player_index = (int)Math.Round((double)Random.Range(0, (cars.Length - 1)));
 
@@ -153,24 +154,24 @@ public class RaceManager : MonoBehaviour
         for (int i = 0; i < size; i++)
         {
             CarController car = cars[i].GetComponent<CarController>();
-            if (totalVehicles == rand_player_index)
+            if (i == rand_player_index)
             {
                 WaypointCircuit wc = car.GetComponent<WaypointProgressTracker>().circuit;
                 Color cc_color = new Color(0.2f,0.2f,0.2f,0.2f);
                 GameObject _originalCar = car.gameObject;
                 Debug.Log("Player Found");
-                Destroy(_originalCar);
                 Transform t = _originalCar.transform.parent.transform;
                 Transform t1 = _originalCar.transform;
+
+                Destroy(_originalCar);
                 _originalCar = Instantiate(carList.cars[current_vehicle.carIndex].car, t);
                 _originalCar.transform.position = t1.position;
                 _originalCar.transform.rotation = t1.rotation;
 
 
+                carModifier a = _originalCar.GetComponent<carModifier>();
 
-                carModifier a = car.GetComponent<carModifier>();
-
-
+                Debug.Log("Player Modifier Found" + a);
                 if (a._supportsWheel)
                     a.changeWheels(current_vehicle.wheelsIndex);
                 if (a._supportsColor)
@@ -185,6 +186,11 @@ public class RaceManager : MonoBehaviour
                 if (a._supportsMotors)
                     a.changeMotor(current_vehicle.motorsIndex);
 
+                Debug.Log("COLOR : " +a.CarColor);
+                Debug.Log("WHEELS : " + a.Wheel);
+                Debug.Log("SPOILER : " + a.Spoiler);
+                Debug.Log("SUSPENSION : " + a.Suspension);
+                Debug.Log("MOTOR : " + a.Motor);
 
                 car.color = cc_color;
                 car.raceManager = this;
@@ -369,7 +375,7 @@ public class RaceManager : MonoBehaviour
                 if (audioplayed == 3)
                 {
                     beeps[3].loop = true;
-                    beeps[3].PlayOneShot(backmusic);
+                    beeps[3].PlayOneShot(backmusic,music);
                     audioplayed++;
                 }
             }

@@ -79,6 +79,7 @@ public class MultiplayerHost : MonoBehaviour
         maps = mapsList.maps;
 
         _createButton.onClick.AddListener(() => {
+            PlayerPrefs.SetString("ac1", "true");
             Debug.Log("Loby Created with " + scene_name);
             LobbyManager.Instance.CreateLobby(
                 lobbyName,

@@ -54,6 +54,7 @@ public class MainMenu : Menu
     {
         
         base.SetEnable(value);
+        //PlayerPrefs.DeleteAll();                                                   //Testing purpose only
         //SaveGame.Clear();                                                         //Testing purpose only
         PersonalSaver temp = new PersonalSaver("0", "User Name", 1000, new Color(255f / 255, 189f / 255, 0));
         VehicleSaver temp_vehicle = new VehicleSaver();

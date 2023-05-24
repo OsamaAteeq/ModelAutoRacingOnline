@@ -1,4 +1,5 @@
 ﻿using Data;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -66,12 +67,21 @@ public class carModifier : MonoBehaviour
         old_WheelMeshes = cc.m_WheelMeshes;
         old_WheelEffects = cc.m_WheelEffects;
 
+        //changeColor(5);//FOR TESTING
         isMultiplayer = IsMultiplayer();
     }
 
     private bool IsMultiplayer()
     {
-        return NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost;
+        try
+        {
+            return NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost;
+        }
+        catch (Exception e) 
+        {
+            Debug.Log(e);
+            return false;
+        }
     }
 
     public void changeWheels(int i)
@@ -139,6 +149,7 @@ public class carModifier : MonoBehaviour
                 Destroy(temp_wheel);
 
             }
+            changeSuspensions(currentSuspensionIndex);
             currentWheelIndex = i;
             cc.startFunction();
         }
@@ -151,7 +162,6 @@ public class carModifier : MonoBehaviour
     {
         if (_supportsSpoilers)
         {
-            Debug.Log("SPOILER : " + i);
             Transform t = _attachedSpoiler.transform;
 
             Spoiler toAttach = allSupportedSpoilers.spoilers[i];
@@ -291,7 +301,20 @@ public class carModifier : MonoBehaviour
     {
         if (_supportsMotors)
         {
+            CarController newCarController = allSupportedMotors.motors[i].carController;
+            cc.m_MaximumSteerAngle = newCarController.m_MaximumSteerAngle;
+            cc.m_SteerHelper = newCarController.m_SteerHelper;
+            cc.m_TractionControl = newCarController.m_TractionControl;
+            cc.m_FullTorqueOverAllWheels = newCarController.m_FullTorqueOverAllWheels;
+            cc.m_ReverseTorque = newCarController.m_ReverseTorque;
+            cc.m_Downforce = newCarController.m_Downforce;
+            cc.m_SpeedType = newCarController.m_SpeedType;
+            cc.m_Topspeed = newCarController.m_Topspeed;
+            cc.m_RevRangeBoundary = newCarController.m_RevRangeBoundary;
+            cc.m_SlipLimit = newCarController.m_SlipLimit;
+            cc.m_BrakeTorque = newCarController.m_BrakeTorque;
 
+            currentMotorIndex = i;
         }
         else
         {
@@ -302,7 +325,14 @@ public class carModifier : MonoBehaviour
     {
         if (_supportsSuspensions)
         {
-
+            WheelCollider newWheelCollider = allSupportedSuspensions.suspensions[i].wheelCollider;
+            foreach (WheelCollider wc in old_WheelColliders) 
+            {
+                wc.wheelDampingRate = newWheelCollider.wheelDampingRate;
+                wc.suspensionSpring = newWheelCollider.suspensionSpring;
+                wc.suspensionDistance = newWheelCollider.suspensionDistance;
+            }
+            currentSuspensionIndex = i;
         }
         else
         {

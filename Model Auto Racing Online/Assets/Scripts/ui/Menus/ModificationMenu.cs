@@ -96,9 +96,11 @@ public class ModificationMenu : Menu
     private float _acceleration;
     private float _topSpeed;
     private float _grip;
+    //
     private float _suspensionHeight;
     private float _spring;
     private float _damper;
+    //
     private float _downforce;
 
     private int _cost;

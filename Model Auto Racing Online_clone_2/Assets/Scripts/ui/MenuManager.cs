@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,10 +18,38 @@ public class MenuManager : MonoBehaviour
 
     private void Start()
     {
+        float music;
+        if (PlayerPrefs.HasKey("music"))
+        {
+            music = PlayerPrefs.GetFloat("music");
+        }
+        else
+        {
+            music = 1;
+        }
+        try
+        {
+            GetComponent<AudioSource>().volume = music;
+        }
+        catch (Exception e) 
+        {
+
+        }
         RegisterAllMenus();
 
         OpenMenu(MenuType.Main);
         counter++;
+    }
+    public void Music(float music) 
+    {
+        try
+        {
+            GetComponent<AudioSource>().volume = music;
+        }
+        catch (Exception e)
+        {
+
+        }
     }
 
     #region Public Functions

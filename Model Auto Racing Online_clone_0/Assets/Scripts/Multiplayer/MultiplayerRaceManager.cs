@@ -116,6 +116,7 @@ public class MultiplayerRaceManager : NetworkBehaviour
     private int spawned_count = 0;                                                  //TO CHECK HOW MANY VEHICLES SPAWNED
     private WaypointCircuit circuit;
     private int elemenation_check = 0;
+    private float music;
     
     #endregion
     //NETWORK VARIABLES
@@ -233,6 +234,8 @@ public class MultiplayerRaceManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        music = PlayerPrefs.GetFloat("music");
+
         finish_time.Value = _secondsForEachLap;
         Debug.Log("THIS RACE IS MULTIPLAYER");
         if (IsServer)
@@ -812,7 +815,7 @@ public class MultiplayerRaceManager : NetworkBehaviour
             if (audioplayed == 3)
             {
                 beeps[3].loop = true;
-                beeps[3].PlayOneShot(backmusic);
+                beeps[3].PlayOneShot(backmusic,music);
                 audioplayed++;
             }
         }
@@ -835,7 +838,7 @@ public class MultiplayerRaceManager : NetworkBehaviour
         Debug.Log("RPC ALERT: " + "RACE STARTED KIND OF");
         entertostart.enabled = false;
         beeps = place.GetComponents<AudioSource>();
-        beeps[4].PlayOneShot(racestart);
+        beeps[4].PlayOneShot(racestart,music);
         localCar.tag = "Player";
         
         if (raceType == RaceData.RaceType.Elimination && IsServer)

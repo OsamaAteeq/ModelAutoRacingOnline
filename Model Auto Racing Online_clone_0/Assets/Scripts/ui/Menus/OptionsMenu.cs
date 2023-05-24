@@ -57,6 +57,16 @@ public class OptionsMenu : Menu
         */
     }
 
+    public void HandleVolumeButtonPressed()
+    {
+        _menuManager.SwitchMenu(MenuType.VolumeMenu);
+    }
+
+    public void HandleAchievmentButtonPressed()
+    {
+        _menuManager.SwitchMenu(MenuType.AchievementMenu);
+    }
+
     public void HandleRaceButtonPressed()
     {
         Debug.Log("NOT IMPLEMENTED YET");

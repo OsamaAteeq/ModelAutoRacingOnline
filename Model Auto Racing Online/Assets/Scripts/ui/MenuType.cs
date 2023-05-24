@@ -13,5 +13,7 @@
     MultiplayerRace,
     JoinMultiplayerRace,
     HostMultiplayerRace,
-    MultiplayerCompleteMenu
+    MultiplayerCompleteMenu,
+    VolumeMenu,
+    AchievementMenu
 }

@@ -460,14 +460,84 @@ public class SingleMapSelection : Menu
         throw new NotImplementedException();
     }
 
-    public void HandlePreviousDifficultyButtonPressed()
-    {
-        throw new NotImplementedException();
-    }
-
     public void HandleNextDifficultyButtonPressed()
     {
-        throw new NotImplementedException();
+        RaceData.RaceDifficulty selected_diff = race.difficulty;
+        for (int i = 0; i < difficulties.Count; i++)
+        {
+            if (difficulties[i] == difficulty)
+            {
+                if (i != (difficulties.Count - 1))
+                {
+                    difficulty = difficulties[i + 1];
+                }
+
+                else
+                {
+                    difficulty = difficulties[0];
+                }
+                switch (difficulty)
+                {
+                    case "Easy":
+                        selected_diff = RaceData.RaceDifficulty.Easy;
+                        break;
+                    case "Med":
+                        selected_diff = RaceData.RaceDifficulty.Medium;
+                        break;
+                    case "Hard":
+                        selected_diff = RaceData.RaceDifficulty.Hard;
+                        break;
+                    default:
+                        selected_diff = RaceData.RaceDifficulty.Medium;
+                        break;
+                }
+                race.difficulty = selected_diff;
+
+                _difficultyText.text = difficulty;
+                SaveGame.Save<RaceSaver>("current_race", race);
+                break;
+            }
+        }
+    }
+
+    public void HandlePreviousDifficultyButtonPressed()
+    {
+        RaceData.RaceDifficulty selected_diff = race.difficulty;
+        for (int i = 0; i < difficulties.Count; i++)
+        {
+            if (difficulties[i] == difficulty)
+            {
+                if (i != 0)
+                {
+                    difficulty = difficulties[i - 1];
+                }
+
+                else
+                {
+                    difficulty = difficulties[difficulties.Count - 1];
+                }
+                switch (difficulty)
+                {
+                    case "Easy":
+                        selected_diff = RaceData.RaceDifficulty.Easy;
+                        break;
+                    case "Med":
+                        selected_diff = RaceData.RaceDifficulty.Medium;
+                        break;
+                    case "Hard":
+                        selected_diff = RaceData.RaceDifficulty.Hard;
+                        break;
+                    default:
+                        selected_diff = RaceData.RaceDifficulty.Medium;
+                        break;
+                }
+                race.difficulty = selected_diff;
+
+                _difficultyText.text = difficulty;
+                SaveGame.Save<RaceSaver>("current_race", race);
+                break;
+            }
+        }
     }
 
     public void HandlePreviousTypeButtonPressed()
