@@ -14,5 +14,5 @@ The main branch contains the moblie game and the server branch contains the onli
 This is only a demo project and an actual version may or may not be released on the playstore.
 This game contains third party assets and the development team is not resposible for any copyrighted assest being used in the game.
 
-##Demo
-[![Video](https://img.youtube.com/vi/nm9LBk8DPHY/maxresdefault.jpg)](https://www.youtube.com/watch?v=nm9LBk8DPHY)
+## Demo
+[![Watch the video](https://i.ibb.co/V2ck6bW/Untitled.jpg)](https://www.youtube.com/watch?v=nm9LBk8DPHY)
